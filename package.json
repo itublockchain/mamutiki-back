@@ -1,0 +1,33 @@
+{
+  "name": "mamutiki",
+  "version": "1.0.0",
+  "description": "Campaign Manager Move modülü için TypeScript istemcisi",
+  "main": "scripts/app.ts",
+  "bin": {
+    "mamutiki": "scripts/mamutiki/app.ts"
+  },
+  "scripts": {
+    "add-trusted-key": "ts-node scripts/app.ts add-trusted-key",
+    "create-campaign": "ts-node scripts/app.ts create-campaign",
+    "list-campaigns": "ts-node scripts/app.ts list-campaigns",
+    "add-contribution": "ts-node scripts/app.ts add-contribution ",
+    "list-contributions": "ts-node scripts/app.ts list-contributions ",
+    "help": "ts-node scripts/app.ts help",
+    "sign": "ts-node scripts/sign_test_data.ts",
+    "node": "aptos node run-local-testnet --with-faucet",
+    "build": "aptos move publish --profile default",
+    "execute-project": "aptos move compile && npm run build && npm run start"
+  },
+  "dependencies": {
+    "@aptos-labs/aptos-client": "^1.0.0",
+    "@noble/hashes": "^1.7.1",
+    "aptos": "^1.21.0",
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.17",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

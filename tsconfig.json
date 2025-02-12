@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "es2020",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./dist",
+    "baseUrl": "./scripts/",
+    "paths": {
+      "mamutiki": ["node_modules/mamutiki/src"],
+      "mamutiki/*": ["node_modules/mamutiki/src/*"]
+    }
+  },
+  "include": ["scripts/**/*"]
+}
