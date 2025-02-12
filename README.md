@@ -1,44 +1,46 @@
-# Move Akıllı Kontrat API Dokümantasyonu
+# Mamutiki - Data Marketplace Move Modules
 
-Bu dokümantasyon, Move akıllı kontratlarındaki public entry ve view fonksiyonlarını detaylı bir şekilde açıklamaktadır.
+This documentation details the public entry and view functions in Move smart contracts for a decentralized data marketplace platform.
 
-## İçindekiler
+## Table of Contents
 - [Campaign Manager](#campaign-manager)
 - [Contribution Manager](#contribution-manager)
 - [Escrow Manager](#escrow-manager)
+- [Verifier Manager](#verifier-manager)
 
 ## Campaign Manager
+Module where buyers can create campaigns to purchase specific types of data.
 
-### Public Entry Fonksiyonları
+### Public Entry Functions
 
 #### `create_campaign`
-Yeni bir kampanya oluşturur ve kampanya için gerekli ödül havuzunu escrow'a kilitler.
+Creates a new data collection campaign and locks the reward pool in escrow.
 
-**Parametreler:**
-- `account: &signer` - Kampanyayı oluşturan hesabın imzalayıcısı
-- `title: vector<u8>` - Kampanya başlığı
-- `description: vector<u8>` - Kampanya açıklaması
-- `prompt: vector<u8>` - Veri toplama yönergesi
-- `unit_price: u64` - Her bir veri katkısı için ödenecek ödül miktarı
-- `minimum_contribution: u64` - Minimum katkı miktarı
-- `reward_pool: u64` - Toplam ödül havuzu
+**Parameters:**
+- `account: &signer` - Signer of the campaign creator's account
+- `title: String` - Campaign title
+- `description: String` - Campaign description
+- `prompt: String` - Data collection prompt
+- `unit_price: u64` - Reward amount per data point
+- `minimum_contribution: u64` - Minimum contribution amount
+- `reward_pool: u64` - Total reward pool
 
-### View Fonksiyonları
+### View Functions
 
 #### `get_campaign`
-Belirli bir kampanyanın detaylarını döndürür.
+Returns details of a specific campaign.
 
-**Parametreler:**
-- `campaign_id: u64` - Kampanya ID'si
+**Parameters:**
+- `campaign_id: u64` - Campaign ID
 
-**Dönüş Değeri:**
+**Return Value:**
 ```move
 Campaign {
     id: u64,
     creator: address,
-    title: vector<u8>,
-    description: vector<u8>,
-    prompt: vector<u8>,
+    title: String,
+    description: String,
+    prompt: String,
     reward_pool: u64,
     remaining_reward: u64,
     unit_price: u64,
@@ -48,117 +50,68 @@ Campaign {
 ```
 
 #### `get_all_campaigns`
-Sistemdeki tüm kampanyaları listeler.
+Lists all campaigns in the marketplace.
 
-**Dönüş Değeri:**
-- `vector<Campaign>` - Tüm kampanyaların listesi
-
-#### `get_unit_price`
-Bir kampanyanın birim veri ödül miktarını döndürür.
-
-**Parametreler:**
-- `campaign_id: u64` - Kampanya ID'si
-
-**Dönüş Değeri:**
-- `u64` - Kampanyanın birim veri başına ödül miktarı
+**Return Value:**
+- `vector<Campaign>` - List of all campaigns
 
 ## Contribution Manager
+Manages data contributions from sellers to active campaigns.
 
-### Public Entry Fonksiyonları
+### Public Entry Functions
 
 #### `add_contribution`
-Bir kampanyaya veri katkısı ekler ve ödülü contributor'a transfer eder.
+Submits data contribution to a campaign and transfers the reward to the contributor.
 
-**Parametreler:**
-- `account: &signer` - Katkıda bulunan hesabın imzalayıcısı
-- `campaign_id: u64` - Kampanya ID'si
-- `data_count: u64` - Katkıda bulunulan veri sayısı
-- `store_cid: vector<u8>` - Verilerin IPFS CID'si
-- `score: u64` - Katkının kalite skoru
-- `signature: vector<u8>` - Katkının doğrulama imzası
+**Parameters:**
+- `account: &signer` - Signer of the contributor's account
+- `campaign_id: u64` - Campaign ID
+- `data_count: u64` - Number of data points submitted
+- `store_cid: String` - IPFS CID of the data
+- `score: u64` - Quality score of the contribution
+- `signature: vector<u8>` - ED25519 signature from trusted validator
 
-### View Fonksiyonları
+### View Functions
 
-#### `get_all_contributions`
-Tüm kampanyalardaki tüm katkıları listeler.
+#### `get_campaign_contributions`
+Lists all contributions for a specific campaign.
 
-**Dönüş Değeri:**
+**Parameters:**
+- `campaign_id: u64` - Campaign ID
+
+**Return Value:**
 ```move
 vector<Contribution> {
     campaign_id: u64,
     contributor: address,
     data_count: u64,
-    store_cid: vector<u8>,
+    store_cid: String,
     score: u64,
     signature: vector<u8>
 }
 ```
 
-#### `get_campaign_contributions`
-Belirli bir kampanyadaki tüm katkıları listeler.
+## Verifier Manager
+Manages verification of data contributions using trusted validator signatures.
 
-**Parametreler:**
-- `campaign_id: u64` - Kampanya ID'si
+### Public Entry Functions
 
-**Dönüş Değeri:**
-- `vector<Contribution>` - Kampanyaya yapılan tüm katkıların listesi
+#### `add_trusted_key`
+Adds a new trusted validator's public key to the system.
 
-#### `get_contributor_contributions`
-Belirli bir kullanıcının tüm katkılarını listeler.
+**Parameters:**
+- `account: &signer` - Signer of the marketplace creator account
+- `public_key: vector<u8>` - ED25519 public key of the trusted validator
 
-**Parametreler:**
-- `contributor: address` - Katkıda bulunan kullanıcının adresi
+## Important Notes
 
-**Dönüş Değeri:**
-- `vector<Contribution>` - Kullanıcının tüm katkılarının listesi
-
-## Escrow Manager
-
-### Public Entry Fonksiyonları
-
-#### `lock_funds`
-Bir kampanya için ödül havuzunu kilitler.
-
-**Parametreler:**
-- `account: &signer` - Fonları kilitleyecek hesabın imzalayıcısı
-- `campaign_id: u64` - Kampanya ID'si
-- `amount: u64` - Kilitlenecek miktar
-- `store_addr: address` - Escrow store'un adresi
-
-#### `release_funds`
-Kilitli fonları serbest bırakır.
-
-**Parametreler:**
-- `account: &signer` - Fonları serbest bırakacak hesabın imzalayıcısı
-- `campaign_id: u64` - Kampanya ID'si
-- `recipient: address` - Fonların gönderileceği adres
-- `store_addr: address` - Escrow store'un adresi
-
-### View Fonksiyonları
-
-#### `get_locked_amount`
-Bir kampanya için kilitli olan toplam miktarı döndürür.
-
-**Parametreler:**
-- `campaign_id: u64` - Kampanya ID'si
-- `store_addr: address` - Escrow store'un adresi
-
-**Dönüş Değeri:**
-- `u64` - Kilitli miktar
-
-## Önemli Notlar
-
-1. Tüm para birimleri AptosCoin cinsindendir.
-2. Veri doğrulama imzaları ED25519 algoritması kullanılarak oluşturulmalıdır.
-3. Contribution eklerken verilen imza, aşağıdaki verilerin hash'i üzerinde oluşturulmalıdır:
+1. All currency amounts are in AptosCoin.
+2. Data verification is performed by trusted validators using ED25519 signatures.
+3. The contribution signature is generated over:
    - campaign_id
    - data_count
-   - store_cid
-   - score
-
-## Hata Kodları
-
-- `ERR_NOT_ENOUGH_BALANCE: u64 = 1` - Yetersiz bakiye
-- `ERR_ESCROW_NOT_FOUND: u64 = 2` - Escrow bulunamadı
-- `ERR_UNAUTHORIZED: u64 = 3` - Yetkisiz işlem
-- `ERR_INSUFFICIENT_FUNDS: u64 = 1` - Yetersiz fon 
+   - store_cid (IPFS Content ID)
+   - score (quality score)
+4. Data quality scores are determined by trusted validators.
+5. Only the marketplace creator can manage trusted validator keys.
+6. Data is stored in decentralized storage solutions (IPFS).
