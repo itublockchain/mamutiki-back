@@ -23,9 +23,9 @@ export default async function createCampaign() {
     console.log("Title:", title);
     console.log("Description:", description);
     console.log("Prompt:", prompt);
-    console.log("Unit Price:", unitPrice, "APT");
-    console.log("Minimum Contribution:", minContribution, "APT");
-    console.log("Reward Pool:", rewardPool, "APT");
+    console.log("Unit Price:", unitPrice, "Move");
+    console.log("Minimum Contribution:", minContribution, "Move");
+    console.log("Reward Pool:", rewardPool, "Move");
 
     const txn = await sdk.campaign.createCampaign(
       title,
