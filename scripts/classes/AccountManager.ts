@@ -24,7 +24,6 @@ class AccountManager extends BaseManager {
   async getBalance(): Promise<AccountBalance> {
     if (!this.account) throw new Error("Account not set");
 
-    console.log("bendeliyim huaa");
     const resources = await this.aptos.getAccountResources({
       accountAddress: this.account.accountAddress,
     });
