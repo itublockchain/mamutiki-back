@@ -76,7 +76,7 @@ module marketplace::escrow_manager {
     }
 
     /// Releases funds for data contribution
-    public(friend) fun release_funds_for_data(
+    public(friend) fun release_funds_for_contribution(
         campaign_id: u64,
         recipient: address,
         amount: u64
@@ -233,7 +233,7 @@ module marketplace::escrow_manager {
         lock_funds(&test_account, campaign_id, total_amount, @marketplace);
         
         // Release funds for data contribution
-        release_funds_for_data(campaign_id, signer::address_of(&contributor), release_amount);
+        release_funds_for_contribution(campaign_id, signer::address_of(&contributor), release_amount);
         
         // Check balances and remaining locked amount
         let contributor_balance = coin::balance<aptos_coin::AptosCoin>(signer::address_of(&contributor));

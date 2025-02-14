@@ -3,20 +3,20 @@ module marketplace::contribution_manager {
     use std::vector;
     use std::table::{Self, Table};
     use std::string::{String};
-
-    #[test_only]
-    use std::string::{Self};
+    use std::event;
+    use aptos_framework::timestamp;
+    use aptos_framework::account;
 
     use marketplace::campaign_manager;
     use marketplace::escrow_manager;
     use marketplace::verifier;
 
     #[test_only]
-    use aptos_framework::account;
-    #[test_only]
     use aptos_framework::aptos_coin;
     #[test_only]
     use aptos_framework::coin;
+    #[test_only]
+    use std::string::{Self};
 
     // Sturctre of Contribution
     struct Contribution has store, drop, copy {
@@ -31,6 +31,17 @@ module marketplace::contribution_manager {
     // Store for Contribution
     struct ContributionStore has key {
         contributions: Table<u64, vector<Contribution>>, // campaign_id -> contributions
+        contribution_events: event::EventHandle<ContributionEvent>,
+    }
+
+    // Event structure for contribution.
+    struct ContributionEvent has drop, store {
+        campaign_id: u64,
+        contributor: address,
+        data_count: u64,
+        score: u64,
+        reward_amount: u64,
+        timestamp: u64
     }
 
     // Error codes
@@ -41,6 +52,7 @@ module marketplace::contribution_manager {
     fun init_module(account: &signer) {
         let store = ContributionStore {
             contributions: table::new(),
+            contribution_events: account::new_event_handle<ContributionEvent>(account),
         };
         move_to(account, store);
 
@@ -84,11 +96,21 @@ module marketplace::contribution_manager {
         let unit_price = campaign_manager::get_unit_price(campaign_id);
         let total_reward = data_count * unit_price;
         
-        escrow_manager::release_funds_for_data(
+        escrow_manager::release_funds_for_contribution(
             campaign_id,
             signer::address_of(account),
             total_reward
         );
+
+        // Emit the event
+        event::emit_event(&mut store.contribution_events, ContributionEvent {
+            campaign_id,
+            contributor: signer::address_of(account),
+            data_count,
+            score,
+            reward_amount: total_reward,
+            timestamp: timestamp::now_seconds(),
+        });
     }
 
     // Get all contributions
@@ -150,16 +172,19 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 65538)] // ED25519 signature size error
+    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)] // ED25519 signature size error
     fun test_add_contribution() acquires ContributionStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
         let campaign_manager_account = account::create_account_for_test(@marketplace);
         let contribution_manager = account::create_account_for_test(@marketplace);
         let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
+        
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize AptosCoin
-        let framework_signer = account::create_account_for_test(@0x1);
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
         // Register coin stores
@@ -224,7 +249,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 65538)] // ED25519 signature size error
+    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)] // ED25519 signature size error
     fun test_multiple_contributions() acquires ContributionStore {
         // Create test accounts
         let test_account1 = account::create_account_for_test(@0x1);
@@ -232,9 +257,12 @@ module marketplace::contribution_manager {
         let campaign_manager_account = account::create_account_for_test(@marketplace);
         let contribution_manager = account::create_account_for_test(@marketplace);
         let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
+        
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize AptosCoin
-        let framework_signer = account::create_account_for_test(@0x1);
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
         // Register coin stores
