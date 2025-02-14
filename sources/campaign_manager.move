@@ -3,9 +3,20 @@ module marketplace::campaign_manager {
     use std::table;
     use std::vector;
     use std::string::{String};
+    use std::event;
+    use std::timestamp;
+    use aptos_framework::account;
+    use aptos_framework::resource_account;
+    use aptos_framework::ed25519;
+    use std::bcs;
 
     #[test_only]
     use std::string::{Self};
+    #[test_only]
+    use aptos_framework::aptos_coin;
+    #[test_only]
+    use aptos_framework::coin;
+
 
     friend marketplace::contribution_manager;
 
@@ -27,17 +38,45 @@ module marketplace::campaign_manager {
     struct CampaignStore has key {
         campaigns: table::Table<u64, Campaign>,
         next_id: u64,
+        create_campaign_events: event::EventHandle<CampaignCreatedEvent>,
     }
+
+    // Event structure for campaign creation.
+    struct CampaignCreatedEvent has drop, store {
+        campaign_id: u64,
+        creator: address,
+        title: String,
+        reward_pool: u64,
+        unit_price: u64,
+        timestamp: u64
+    }
+
+    struct HashStore has key {
+        hashes: table::Table<vector<u8>, u64>,
+        signer_cap: account::SignerCapability
+    }
+
+    const SEED: vector<u8> = b"MARKETPLACE_RESOURCE_ACCOUNT";
+    const ERR_UNAUTHORIZED: u64 = 1000;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
+        let (resource_signer, signer_cap) = resource_account::create_resource_account(account, SEED);
+        
         let store = CampaignStore {
             campaigns: table::new<u64, Campaign>(),
             next_id: 1,
+            create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
+
+        let hash_store = HashStore {
+            hashes: table::new<vector<u8>, u64>(),
+            signer_cap
+        };
+        move_to(&resource_signer, hash_store);
     }
 
     // Creates a new campaign and adds it to the store.
@@ -72,6 +111,16 @@ module marketplace::campaign_manager {
             active: true,
         };
         table::add(&mut store_ref.campaigns, id, new_campaign);
+
+        // Emit the event
+        event::emit_event(&mut store_ref.create_campaign_events, CampaignCreatedEvent {
+            campaign_id: id,
+            creator: signer::address_of(account),
+            title,
+            reward_pool,
+            unit_price,
+            timestamp: timestamp::now_seconds(),
+        });
     }
 
     // Returns the campaign with the specified ID.
@@ -129,22 +178,18 @@ module marketplace::campaign_manager {
         init_module(account);
     }
 
-    #[test_only]
-    use aptos_framework::account;
-    #[test_only]
-    use aptos_framework::aptos_coin;
-    #[test_only]
-    use aptos_framework::coin;
-
     #[test]
     fun test_create_campaign() acquires CampaignStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
         let campaign_manager = account::create_account_for_test(@marketplace);
         let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
+        
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize AptosCoin
-        let framework_signer = account::create_account_for_test(@0x1);
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
         // Create coin records for test accounts and add balance
@@ -189,9 +234,12 @@ module marketplace::campaign_manager {
         let test_account = account::create_account_for_test(@0x1);
         let campaign_manager = account::create_account_for_test(@marketplace);
         let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
+        
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize AptosCoin
-        let framework_signer = account::create_account_for_test(@0x1);
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
         // Create coin records for test accounts and add balance
@@ -247,9 +295,12 @@ module marketplace::campaign_manager {
         let test_account = account::create_account_for_test(@0x1);
         let campaign_manager = account::create_account_for_test(@marketplace);
         let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
+        
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize AptosCoin
-        let framework_signer = account::create_account_for_test(@0x1);
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
         // Create coin records for test accounts and add balance
@@ -295,5 +346,26 @@ module marketplace::campaign_manager {
         
         // Query nonexistent campaign - should fail
         get_campaign(999);
+    }
+
+    public fun sign_hash(account: &signer, campaign_id: u64, hash: vector<u8>): vector<u8> acquires HashStore, CampaignStore {
+        let hash_store = borrow_global_mut<HashStore>(@marketplace);
+        let campaign = get_campaign(campaign_id);
+        
+        if (table::contains(&hash_store.hashes, hash)) {
+            let stored_campaign_id = *table::borrow(&hash_store.hashes, hash);
+            let stored_campaign = get_campaign(stored_campaign_id);
+            assert!(stored_campaign.creator == signer::address_of(account), ERR_UNAUTHORIZED);
+        } else {
+            table::add(&mut hash_store.hashes, hash, campaign_id);
+        };
+
+        let resource_signer = account::create_signer_with_capability(&hash_store.signer_cap);
+        let resource_account_addr = signer::address_of(&resource_signer);
+        let public_key = ed25519::new_validated_public_key_from_bytes(
+            *resource_account::get_authentication_key(&resource_account_addr)
+        );
+        
+        ed25519::sign_struct(&resource_signer, hash, public_key)
     }
 }
