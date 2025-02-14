@@ -85,7 +85,7 @@ module marketplace::verifier {
         vector::append(&mut message, bcs::to_bytes(&data_count));
         
         let store_cid_bytes = string::bytes(&store_cid);
-        vector::append(&mut message, bcs::to_bytes(&(store_cid_bytes.length() as u64)));
+        vector::append(&mut message, bcs::to_bytes(&(vector::length(store_cid_bytes) as u64)));
         vector::append(&mut message, *store_cid_bytes);
         
         vector::append(&mut message, bcs::to_bytes(&score));

@@ -1,20 +1,33 @@
-import { AptosAccount } from "aptos";
+import {
+  Account,
+  Ed25519Account,
+  Ed25519PrivateKey,
+  SingleKeyAccount,
+} from "@aptos-labs/ts-sdk";
+
 import { sha256 } from "@noble/hashes/sha256";
+import { createHash } from "crypto";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 export default class DataSigner {
-  private trustedAccount: AptosAccount;
+  private trustedAccount: SingleKeyAccount;
 
   constructor(privateKey: string = process.env.TRUSTED_PRIVATE_KEY!) {
-    this.trustedAccount = new AptosAccount(Buffer.from(privateKey, "hex"));
+    const formattedPrivateKey = new Ed25519PrivateKey(
+      Buffer.from(privateKey, "hex")
+    );
+
+    this.trustedAccount = Account.fromPrivateKey({
+      privateKey: formattedPrivateKey,
+      legacy: false,
+    });
   }
 
   getTrustedPublicKey(): string {
-    return Buffer.from(this.trustedAccount.pubKey().toUint8Array()).toString(
-      "hex"
-    );
+    console.log(this.trustedAccount.publicKey);
+    return "";
   }
 
   signContributionData(
@@ -24,7 +37,7 @@ export default class DataSigner {
     score: number
   ): string {
     // Manuel serileştirme
-    const storeKeyBuffer = Buffer.from(storeCid);
+    const storeKeyBuffer = Buffer.from(storeCid, "utf-8");
     const message = Buffer.alloc(8 + 8 + 8 + storeKeyBuffer.length + 8);
 
     // campaign_id (u64)
@@ -43,12 +56,12 @@ export default class DataSigner {
     message.writeBigUInt64LE(BigInt(score), 24 + storeKeyBuffer.length);
 
     // Mesajı hash'le (SHA2-256) ve imzala
-    const messageHash = sha256(message);
-    const signature = this.trustedAccount
-      .signBuffer(messageHash)
-      .toUint8Array();
+    const messageHash = createHash("sha256").update(message).digest();
 
-    return Buffer.from(signature).toString("hex");
+    const signature = this.trustedAccount.sign(messageHash).bcsToBytes();
+    const signatureHex = Buffer.from(signature).toString("hex");
+
+    return signatureHex.slice(4);
   }
 }
 

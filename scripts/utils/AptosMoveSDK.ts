@@ -1,4 +1,4 @@
-import { AptosAccount } from "aptos";
+import { Account, Ed25519PrivateKey, Ed25519Account } from "@aptos-labs/ts-sdk";
 
 import CONFIG from "./config";
 
@@ -12,18 +12,17 @@ class AptosMoveSDK {
   readonly campaign: CampaignManager;
   readonly contribution: ContributionManager;
 
-  constructor(
-    nodeUrl: string = CONFIG.NODE_URL,
-    faucetUrl: string = CONFIG.FAUCET_URL,
-    moduleAddress: string = CONFIG.MODULE_ADDRESS
-  ) {
-    this.account = new AccountManager(nodeUrl, faucetUrl, moduleAddress);
-    this.campaign = new CampaignManager(nodeUrl, moduleAddress);
-    this.contribution = new ContributionManager(nodeUrl, moduleAddress);
+  constructor(moduleAddress: string = CONFIG.MODULE_ADDRESS) {
+    this.account = new AccountManager(moduleAddress);
+    this.campaign = new CampaignManager(moduleAddress);
+    this.contribution = new ContributionManager(moduleAddress);
   }
 
-  setAccount(privateKeyHex?: string): AptosAccount {
-    const account = this.account.createAccount(privateKeyHex);
+  setAccount(privateKeyHex?: string): Ed25519Account {
+    const account = Account.fromPrivateKey({
+      privateKey: new Ed25519PrivateKey(privateKeyHex || ""),
+    });
+
     this.campaign.setAccount(account);
     this.contribution.setAccount(account);
     return account;
