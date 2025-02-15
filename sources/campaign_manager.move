@@ -6,9 +6,6 @@ module marketplace::campaign_manager {
     use std::event;
     use std::timestamp;
     use aptos_framework::account;
-    use aptos_framework::resource_account;
-    use aptos_framework::ed25519;
-    use std::bcs;
 
     #[test_only]
     use std::string::{Self};
@@ -16,7 +13,6 @@ module marketplace::campaign_manager {
     use aptos_framework::aptos_coin;
     #[test_only]
     use aptos_framework::coin;
-
 
     friend marketplace::contribution_manager;
 
@@ -27,10 +23,11 @@ module marketplace::campaign_manager {
         title: String,
         description: String,
         prompt: String,
-        reward_pool: u64,
-        remaining_reward: u64,
         unit_price: u64,
         minimum_contribution: u64,
+        reward_pool: u64,
+        remaining_reward: u64,
+        public_key_for_encryption: vector<u8>,
         active: bool,
     }
     
@@ -48,35 +45,22 @@ module marketplace::campaign_manager {
         title: String,
         reward_pool: u64,
         unit_price: u64,
+        public_key_for_encryption: vector<u8>,
         timestamp: u64
     }
 
-    struct HashStore has key {
-        hashes: table::Table<vector<u8>, u64>,
-        signer_cap: account::SignerCapability
-    }
-
-    const SEED: vector<u8> = b"MARKETPLACE_RESOURCE_ACCOUNT";
     const ERR_UNAUTHORIZED: u64 = 1000;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
-        let (resource_signer, signer_cap) = resource_account::create_resource_account(account, SEED);
-        
         let store = CampaignStore {
             campaigns: table::new<u64, Campaign>(),
             next_id: 1,
             create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
-
-        let hash_store = HashStore {
-            hashes: table::new<vector<u8>, u64>(),
-            signer_cap
-        };
-        move_to(&resource_signer, hash_store);
     }
 
     // Creates a new campaign and adds it to the store.
@@ -87,7 +71,8 @@ module marketplace::campaign_manager {
         prompt: String,
         unit_price: u64,
         minimum_contribution: u64,
-        reward_pool: u64
+        reward_pool: u64,
+        public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
         // Get store from module address
         let module_addr = @marketplace;
@@ -108,6 +93,7 @@ module marketplace::campaign_manager {
             minimum_contribution,
             reward_pool,
             remaining_reward: reward_pool,
+            public_key_for_encryption,
             active: true,
         };
         table::add(&mut store_ref.campaigns, id, new_campaign);
@@ -119,6 +105,7 @@ module marketplace::campaign_manager {
             title,
             reward_pool,
             unit_price,
+            public_key_for_encryption,
             timestamp: timestamp::now_seconds(),
         });
     }
@@ -152,13 +139,6 @@ module marketplace::campaign_manager {
         campaigns
     }
 
-    // Returns the unit price of a campaign
-    #[view]
-    public fun get_unit_price(campaign_id: u64): u64 acquires CampaignStore {
-        let campaign = get_campaign(campaign_id);
-        campaign.unit_price
-    }
-
     #[view]
     public(friend) fun get_all_campaign_ids(): vector<u64> acquires CampaignStore {
         let store = borrow_global<CampaignStore>(@marketplace);
@@ -171,6 +151,25 @@ module marketplace::campaign_manager {
             i = i + 1;
         };
         campaign_ids
+    }
+
+    // Returns the unit price of a campaign
+    #[view]
+    public fun get_unit_price(campaign_id: u64): u64 acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.unit_price
+    }
+
+    #[view]
+    public fun get_public_key_for_encryption(campaign_id: u64): vector<u8> acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.public_key_for_encryption
+    }
+
+    #[view]
+    public fun get_campaign_creator(campaign_id: u64): address acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.creator
     }
 
     #[test_only]
@@ -208,9 +207,10 @@ module marketplace::campaign_manager {
         let unit_price = 100;
         let minimum_contribution = 0;
         let reward_pool = 1000;
+        let public_key_for_encryption = b"Test Public Key";
         
         // Create campaign
-        create_campaign(&test_account, title, description, prompt, unit_price, minimum_contribution, reward_pool);
+        create_campaign(&test_account, title, description, prompt, unit_price, minimum_contribution, reward_pool, public_key_for_encryption);
         
         // Check campaign
         let campaign = get_campaign(1);
@@ -221,7 +221,8 @@ module marketplace::campaign_manager {
         assert!(campaign.unit_price == unit_price, 5);
         assert!(campaign.minimum_contribution == minimum_contribution, 6);
         assert!(campaign.reward_pool == reward_pool, 7);
-        assert!(campaign.active == true, 8);
+        assert!(campaign.public_key_for_encryption == public_key_for_encryption, 8);
+        assert!(campaign.active == true, 9);
 
         // Clean up capabilities
         coin::destroy_burn_cap(burn_cap);
@@ -259,7 +260,8 @@ module marketplace::campaign_manager {
             string::utf8(b"Prompt 1"),
             100,
             0,
-            1000
+            1000,
+            b"Test Public Key"
         );
         
         create_campaign(
@@ -269,7 +271,8 @@ module marketplace::campaign_manager {
             string::utf8(b"Prompt 2"),
             200,
             0,
-            2000
+            2000,
+            b"Test Public Key"
         );
         
         // Get all campaigns and check
@@ -323,7 +326,8 @@ module marketplace::campaign_manager {
             string::utf8(b"Test Data Spec"),
             unit_price,
             0,
-            1000
+            1000,
+            b"Test Public Key"
         );
         
         // Check unit price
@@ -346,26 +350,5 @@ module marketplace::campaign_manager {
         
         // Query nonexistent campaign - should fail
         get_campaign(999);
-    }
-
-    public fun sign_hash(account: &signer, campaign_id: u64, hash: vector<u8>): vector<u8> acquires HashStore, CampaignStore {
-        let hash_store = borrow_global_mut<HashStore>(@marketplace);
-        let campaign = get_campaign(campaign_id);
-        
-        if (table::contains(&hash_store.hashes, hash)) {
-            let stored_campaign_id = *table::borrow(&hash_store.hashes, hash);
-            let stored_campaign = get_campaign(stored_campaign_id);
-            assert!(stored_campaign.creator == signer::address_of(account), ERR_UNAUTHORIZED);
-        } else {
-            table::add(&mut hash_store.hashes, hash, campaign_id);
-        };
-
-        let resource_signer = account::create_signer_with_capability(&hash_store.signer_cap);
-        let resource_account_addr = signer::address_of(&resource_signer);
-        let public_key = ed25519::new_validated_public_key_from_bytes(
-            *resource_account::get_authentication_key(&resource_account_addr)
-        );
-        
-        ed25519::sign_struct(&resource_signer, hash, public_key)
     }
 }

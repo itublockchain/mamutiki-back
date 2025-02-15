@@ -206,6 +206,7 @@ module marketplace::contribution_manager {
         let prompt = string::utf8(b"Test Prompt");
         let minimum_contribution = 0;
         let reward_pool = 1000;
+        let public_key_for_encryption = b"Test Public Key";
         
         campaign_manager::create_campaign(
             &campaign_manager_account,
@@ -214,7 +215,8 @@ module marketplace::contribution_manager {
             prompt,
             unit_price,
             minimum_contribution,
-            reward_pool
+            reward_pool,
+            public_key_for_encryption
         );
         
         // Add test public key
@@ -285,6 +287,7 @@ module marketplace::contribution_manager {
         let prompt = string::utf8(b"Test Prompt");
         let minimum_contribution = 0;
         let reward_pool = 1000;
+        let public_key_for_encryption = b"Test Public Key";
         
         campaign_manager::create_campaign(
             &campaign_manager_account,
@@ -293,7 +296,8 @@ module marketplace::contribution_manager {
             prompt,
             unit_price,
             minimum_contribution,
-            reward_pool
+            reward_pool,
+            public_key_for_encryption
         );
         
         // Add test public key
