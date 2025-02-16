@@ -90,7 +90,10 @@ module marketplace::verifier {
         vector::append(&mut message, *store_cid_bytes);
         
         vector::append(&mut message, bcs::to_bytes(&score));
-        vector::append(&mut message, bcs::to_bytes(&key_for_decryption));
+
+        let key_for_decryption_bytes = string::bytes(&key_for_decryption);
+        vector::append(&mut message, bcs::to_bytes(&(key_for_decryption_bytes.length() as u64)));
+        vector::append(&mut message, *key_for_decryption_bytes);
         
         let message_hash = hash::sha2_256(message);
         let signature = ed25519::new_signature_from_bytes(signature);
