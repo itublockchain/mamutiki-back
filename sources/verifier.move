@@ -78,6 +78,7 @@ module marketplace::verifier {
         data_count: u64,
         store_cid: String,
         score: u64,
+        key_for_decryption: String,
         signature: vector<u8>
     ): bool acquires TrustedPublicKeys {
         let message = vector::empty<u8>();
@@ -89,7 +90,8 @@ module marketplace::verifier {
         vector::append(&mut message, *store_cid_bytes);
         
         vector::append(&mut message, bcs::to_bytes(&score));
-
+        vector::append(&mut message, bcs::to_bytes(&key_for_decryption));
+        
         let message_hash = hash::sha2_256(message);
         let signature = ed25519::new_signature_from_bytes(signature);
         

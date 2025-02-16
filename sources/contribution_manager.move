@@ -25,7 +25,8 @@ module marketplace::contribution_manager {
         data_count: u64,
         store_cid: String,
         score: u64,
-        signature: vector<u8>,
+        key_for_decryption: String,
+        signature: vector<u8>
     }
 
     // Store for Contribution
@@ -67,11 +68,12 @@ module marketplace::contribution_manager {
         data_count: u64,
         store_cid: String,
         score: u64,
+        key_for_decryption: String,
         signature: vector<u8>,
     ) acquires ContributionStore {
         // Verify the signature
         assert!(
-            verifier::verify_contribution_signature(campaign_id, data_count, store_cid, score, signature),
+            verifier::verify_contribution_signature(campaign_id, data_count, store_cid, score, key_for_decryption, signature),
             ERR_NO_VALID_SIGNATURE
         );
 
@@ -81,6 +83,7 @@ module marketplace::contribution_manager {
             data_count,
             store_cid,
             score,
+            key_for_decryption,
             signature
         };
 
@@ -227,10 +230,11 @@ module marketplace::contribution_manager {
         let data_count = 1;
         let store_cid = string::utf8(b"test");
         let score = 100;
+        let key_for_decryption = string::utf8(b"test_key_for_decryption");
         let signature =  b"test_signature" ;
         
         // This should fail because signature is not a valid ED25519 signature
-        add_contribution(&test_account, campaign_id, data_count, store_cid, score, signature);
+        add_contribution(&test_account, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
         
         // Clean up
         coin::destroy_burn_cap(burn_cap);
@@ -308,11 +312,12 @@ module marketplace::contribution_manager {
         let data_count = 1;
         let store_cid = string::utf8(b"test");
         let score = 100;
+        let key_for_decryption = string::utf8(b"test_key_for_decryption");
         let signature =  b"test_signature"  ;
         
         // These should fail because signature is not a valid ED25519 signature
-        add_contribution(&test_account1, campaign_id, data_count, store_cid, score, signature);
-        add_contribution(&test_account2, campaign_id, data_count, store_cid, score, signature);
+        add_contribution(&test_account1, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
+        add_contribution(&test_account2, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
         
         // Clean up
         coin::destroy_burn_cap(burn_cap);
