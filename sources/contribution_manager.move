@@ -96,6 +96,10 @@ module marketplace::contribution_manager {
         // Check if user has already contributed to this campaign
         assert!(!has_contributed(campaign_id, contributor), ERR_ALREADY_CONTRIBUTED);
 
+        // Check if the contribution amount is greater than the minimum contribution
+        let minimum_contribution = campaign_manager::get_minimum_contribution(campaign_id);
+        assert!(get_contributor_contributions(contributor).length() >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
+
         // Verify the signature
         assert!(
             verifier::verify_contribution_signature(contributor, campaign_id, data_count, store_cid, score, key_for_decryption, signature),

@@ -160,12 +160,21 @@ module marketplace::campaign_manager {
         campaign.unit_price
     }
 
+    // Returns the minimum contribution of a campaign
+    #[view]
+    public fun get_minimum_contribution(campaign_id: u64): u64 acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.minimum_contribution
+    }
+
+    // Returns the public key for encryption of a campaign
     #[view]
     public fun get_public_key_for_encryption(campaign_id: u64): vector<u8> acquires CampaignStore {
         let campaign = get_campaign(campaign_id);
         campaign.public_key_for_encryption
     }
 
+    // Returns the creator of a campaign
     #[view]
     public fun get_campaign_creator(campaign_id: u64): address acquires CampaignStore {
         let campaign = get_campaign(campaign_id);
