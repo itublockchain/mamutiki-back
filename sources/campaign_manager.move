@@ -6,7 +6,8 @@ module marketplace::campaign_manager {
     use std::event;
     use std::timestamp;
     use aptos_framework::account;
-
+    use marketplace::subscription_manager;
+    
     #[test_only]
     use std::string::{Self};
     #[test_only]
@@ -49,7 +50,7 @@ module marketplace::campaign_manager {
         timestamp: u64
     }
 
-    const ERR_UNAUTHORIZED: u64 = 1000;
+    const ERR_NO_SUBSCRIPTION: u64 = 1001;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
 
@@ -74,6 +75,14 @@ module marketplace::campaign_manager {
         reward_pool: u64,
         public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
+
+        let (has_subscription, _) = subscription_manager::check_subscription(signer::address_of(account));
+        
+        // If there is no subscription, minimum_contribution must be 0
+        if (!has_subscription) {
+            assert!(minimum_contribution == 0, ERR_NO_SUBSCRIPTION);
+        };
+
         // Get store from module address
         let module_addr = @marketplace;
         let store_ref = borrow_global_mut<CampaignStore>(module_addr);
@@ -202,10 +211,12 @@ module marketplace::campaign_manager {
 
         // Create coin records for test accounts and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(10000, &mint_cap);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&test_account), coins);
         
         // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
         init_module(&campaign_manager);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
@@ -254,10 +265,12 @@ module marketplace::campaign_manager {
 
         // Create coin records for test accounts and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(20000, &mint_cap);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&test_account), coins);
         
         // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
         init_module(&campaign_manager);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
@@ -317,10 +330,12 @@ module marketplace::campaign_manager {
 
         // Create coin records for test accounts and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(10000, &mint_cap);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&test_account), coins);
         
         // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
         init_module(&campaign_manager);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
@@ -359,5 +374,48 @@ module marketplace::campaign_manager {
         
         // Query nonexistent campaign - should fail
         get_campaign(999);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 1001, location = marketplace::campaign_manager)]
+    fun test_create_campaign_without_subscription() acquires CampaignStore {
+        // Create test accounts
+        let test_account = account::create_account_for_test(@0x1);
+        let campaign_manager = account::create_account_for_test(@marketplace);
+        let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
+        
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
+        
+        // Initialize AptosCoin
+        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+
+        // Create coin record for test account and add balance
+        coin::register<aptos_coin::AptosCoin>(&test_account);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
+        coin::deposit(signer::address_of(&test_account), coins);
+        
+        // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
+        init_module(&campaign_manager);
+        marketplace::escrow_manager::initialize_for_test(&escrow_manager);
+        
+        // User without subscription tries to create a campaign with non-zero minimum_contribution
+        create_campaign(
+            &test_account,
+            string::utf8(b"Test Campaign"),
+            string::utf8(b"Test Description"),
+            string::utf8(b"Test Prompt"),
+            100, // unit_price
+            5, // minimum_contribution > 0, so it should error
+            1000, // reward_pool
+            b"Test Public Key"
+        );
+
+        // Cleanup
+        coin::destroy_burn_cap(burn_cap);
+        coin::destroy_mint_cap(mint_cap);
     }
 }

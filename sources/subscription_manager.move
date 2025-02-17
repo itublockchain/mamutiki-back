@@ -105,6 +105,11 @@ module marketplace::subscription_manager {
     #[test_only]
     use aptos_framework::aptos_coin;
 
+    #[test_only]
+    public fun initialize_for_test(creator: &signer) {
+        init_module(creator);
+    }
+
     #[test(creator = @marketplace, subscriber = @0x123, framework = @aptos_framework)]
     fun test_subscription_flow(
         creator: &signer,
@@ -121,12 +126,15 @@ module marketplace::subscription_manager {
         // Initialize AptosCoin for testing
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(framework);
 
+        // Register coin store for creator
+        coin::register<AptosCoin>(creator);
+
         // Initialize module
         init_module(creator);
 
-        // Give test coins to subscriber
+        // Give test coins to subscriber (100 APT)
         coin::register<AptosCoin>(subscriber);
-        coin::deposit(signer::address_of(subscriber), coin::mint(20_000_000, &mint_cap));
+        coin::deposit(signer::address_of(subscriber), coin::mint(100_000_000_000, &mint_cap));
 
         // Subscribe
         subscribe(subscriber);

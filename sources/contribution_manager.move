@@ -50,7 +50,8 @@ module marketplace::contribution_manager {
     const ERR_INVALID_DATA_COUNT: u64 = 2;
     const ERR_NO_VALID_SIGNATURE: u64 = 6;
     const ERR_ALREADY_CONTRIBUTED: u64 = 7;
-
+    const ERR_INSUFFICIENT_CONTRIBUTION: u64 = 8;
+    
     fun init_module(account: &signer) {
         let store = ContributionStore {
             contributions: table::new(),
@@ -204,7 +205,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)] // ED25519 signature size error
+    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)]
     fun test_add_contribution() acquires ContributionStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
@@ -219,16 +220,17 @@ module marketplace::contribution_manager {
         // Initialize AptosCoin
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
-        // Register coin stores
+        // Register coin stores and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
         coin::register<aptos_coin::AptosCoin>(&campaign_manager_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(10000, &mint_cap);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&campaign_manager_account), coins);
         
-        // Initialize modules
-        init_module(&contribution_manager);
+        // Initialize modules in correct order
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager_account);
         campaign_manager::initialize_for_test(&campaign_manager_account);
         escrow_manager::initialize_for_test(&escrow_manager);
+        init_module(&contribution_manager);
 
         // Create test campaign
         let campaign_id = 1;
@@ -260,7 +262,7 @@ module marketplace::contribution_manager {
         let store_cid = string::utf8(b"test");
         let score = 100;
         let key_for_decryption = string::utf8(b"test_key_for_decryption");
-        let signature =  b"test_signature" ;
+        let signature = b"test_signature";
         
         // This should fail because signature is not a valid ED25519 signature
         add_contribution(&test_account, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
@@ -284,7 +286,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)] // ED25519 signature size error
+    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)]
     fun test_multiple_contributions() acquires ContributionStore {
         // Create test accounts
         let test_account1 = account::create_account_for_test(@0x1);
@@ -300,17 +302,18 @@ module marketplace::contribution_manager {
         // Initialize AptosCoin
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
-        // Register coin stores
+        // Register coin stores and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account1);
         coin::register<aptos_coin::AptosCoin>(&test_account2);
         coin::register<aptos_coin::AptosCoin>(&campaign_manager_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(10000, &mint_cap);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&campaign_manager_account), coins);
         
-        // Initialize modules
-        init_module(&contribution_manager);
+        // Initialize modules in correct order
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager_account);
         campaign_manager::initialize_for_test(&campaign_manager_account);
         escrow_manager::initialize_for_test(&escrow_manager);
+        init_module(&contribution_manager);
 
         // Create test campaign
         let campaign_id = 1;
@@ -342,7 +345,7 @@ module marketplace::contribution_manager {
         let store_cid = string::utf8(b"test");
         let score = 100;
         let key_for_decryption = string::utf8(b"test_key_for_decryption");
-        let signature =  b"test_signature"  ;
+        let signature = b"test_signature";
         
         // These should fail because signature is not a valid ED25519 signature
         add_contribution(&test_account1, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
