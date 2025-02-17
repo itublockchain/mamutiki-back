@@ -49,6 +49,7 @@ module marketplace::contribution_manager {
     const ERR_CAMPAIGN_NOT_FOUND: u64 = 1;
     const ERR_INVALID_DATA_COUNT: u64 = 2;
     const ERR_NO_VALID_SIGNATURE: u64 = 6;
+    const ERR_ALREADY_CONTRIBUTED: u64 = 7;
 
     fun init_module(account: &signer) {
         let store = ContributionStore {
@@ -61,6 +62,25 @@ module marketplace::contribution_manager {
         verifier::initialize(account);
     }
 
+    // Check if a contributor has already contributed to a campaign
+    fun has_contributed(campaign_id: u64, contributor: address): bool acquires ContributionStore {
+        let store = borrow_global<ContributionStore>(@marketplace);
+        if (!table::contains(&store.contributions, campaign_id)) {
+            return false
+        };
+        
+        let campaign_contributions = table::borrow(&store.contributions, campaign_id);
+        let i = 0;
+        while (i < vector::length(campaign_contributions)) {
+            let contribution = vector::borrow(campaign_contributions, i);
+            if (contribution.contributor == contributor) {
+                return true
+            };
+            i = i + 1;
+        };
+        false
+    }
+
     // Add a new contribution
     public entry fun add_contribution(
         account: &signer,
@@ -71,9 +91,14 @@ module marketplace::contribution_manager {
         key_for_decryption: String,
         signature: vector<u8>,
     ) acquires ContributionStore {
+        let contributor = signer::address_of(account);
+        
+        // Check if user has already contributed to this campaign
+        assert!(!has_contributed(campaign_id, contributor), ERR_ALREADY_CONTRIBUTED);
+
         // Verify the signature
         assert!(
-            verifier::verify_contribution_signature(campaign_id, data_count, store_cid, score, key_for_decryption, signature),
+            verifier::verify_contribution_signature(contributor, campaign_id, data_count, store_cid, score, key_for_decryption, signature),
             ERR_NO_VALID_SIGNATURE
         );
 
