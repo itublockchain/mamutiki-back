@@ -74,6 +74,7 @@ module marketplace::verifier {
 
     // Verify signature for contribution data
     public(friend) fun verify_contribution_signature(
+        sender: address,
         campaign_id: u64,
         data_count: u64,
         store_cid: String,
@@ -82,6 +83,7 @@ module marketplace::verifier {
         signature: vector<u8>
     ): bool acquires TrustedPublicKeys {
         let message = vector::empty<u8>();
+        vector::append(&mut message, bcs::to_bytes(&sender));
         vector::append(&mut message, bcs::to_bytes(&campaign_id));
         vector::append(&mut message, bcs::to_bytes(&data_count));
         
