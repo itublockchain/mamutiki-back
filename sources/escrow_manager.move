@@ -233,6 +233,8 @@ module marketplace::escrow_manager {
         let campaign_id = 1;
         let total_amount = 1000;
         let release_amount = 500;
+        let platform_fee = release_amount * 2 / 100;
+        let total_deduction = release_amount + platform_fee;
         
         // Lock funds
         lock_funds(&test_account, campaign_id, total_amount, @marketplace);
@@ -244,7 +246,7 @@ module marketplace::escrow_manager {
         let contributor_balance = coin::balance<aptos_coin::AptosCoin>(signer::address_of(&contributor));
         let remaining_locked = get_locked_amount(campaign_id, @marketplace);
         assert!(contributor_balance == release_amount, 1);
-        assert!(remaining_locked == total_amount - release_amount, 2);
+        assert!(remaining_locked == total_amount - total_deduction, 2);
 
         // Clean up capabilities
         coin::destroy_burn_cap(burn_cap);
