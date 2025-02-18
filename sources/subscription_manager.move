@@ -25,7 +25,7 @@ module marketplace::subscription_manager {
     const EACTIVE_SUBSCRIPTION_EXISTS: u64 = 4;
 
     /// Initial price (10 APT = 1_000_000_000 octa)
-    const INITIAL_PRICE: u64 = 1_000_000_000;
+    const INITIAL_PRICE: u64 = 100_000_000;
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
     fun init_module(creator: &signer) {

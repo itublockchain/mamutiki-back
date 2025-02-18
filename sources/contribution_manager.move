@@ -51,7 +51,8 @@ module marketplace::contribution_manager {
     const ERR_NO_VALID_SIGNATURE: u64 = 6;
     const ERR_ALREADY_CONTRIBUTED: u64 = 7;
     const ERR_INSUFFICIENT_CONTRIBUTION: u64 = 8;
-    
+    const ERR_INSUFFICIENT_SCORE: u64 = 9;
+
     fun init_module(account: &signer) {
         let store = ContributionStore {
             contributions: table::new(),
@@ -92,7 +93,14 @@ module marketplace::contribution_manager {
         key_for_decryption: String,
         signature: vector<u8>,
     ) acquires ContributionStore {
+        
         let contributor = signer::address_of(account);
+
+        // Verify the signature
+        assert!(
+            verifier::verify_contribution_signature(contributor, campaign_id, data_count, store_cid, score, key_for_decryption, signature),
+            ERR_NO_VALID_SIGNATURE
+        );
         
         // Check if user has already contributed to this campaign
         assert!(!has_contributed(campaign_id, contributor), ERR_ALREADY_CONTRIBUTED);
@@ -101,11 +109,9 @@ module marketplace::contribution_manager {
         let minimum_contribution = campaign_manager::get_minimum_contribution(campaign_id);
         assert!(get_contributor_contributions(contributor).length() >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
 
-        // Verify the signature
-        assert!(
-            verifier::verify_contribution_signature(contributor, campaign_id, data_count, store_cid, score, key_for_decryption, signature),
-            ERR_NO_VALID_SIGNATURE
-        );
+        // Check if the contribution score is greater than the minimum score
+        let minimum_score = campaign_manager::get_minimum_score(campaign_id);
+        assert!(score >= minimum_score, ERR_INSUFFICIENT_SCORE);
 
         let contribution = Contribution {
             campaign_id,
@@ -239,6 +245,7 @@ module marketplace::contribution_manager {
         let description = string::utf8(b"Test Description");
         let prompt = string::utf8(b"Test Prompt");
         let minimum_contribution = 0;
+        let minimum_score = 0;
         let reward_pool = 1000;
         let public_key_for_encryption = b"Test Public Key";
         
@@ -249,6 +256,7 @@ module marketplace::contribution_manager {
             prompt,
             unit_price,
             minimum_contribution,
+            minimum_score,
             reward_pool,
             public_key_for_encryption
         );
@@ -322,6 +330,7 @@ module marketplace::contribution_manager {
         let description = string::utf8(b"Test Description");
         let prompt = string::utf8(b"Test Prompt");
         let minimum_contribution = 0;
+        let minimum_score = 0;
         let reward_pool = 1000;
         let public_key_for_encryption = b"Test Public Key";
         
@@ -332,6 +341,7 @@ module marketplace::contribution_manager {
             prompt,
             unit_price,
             minimum_contribution,
+            minimum_score,
             reward_pool,
             public_key_for_encryption
         );

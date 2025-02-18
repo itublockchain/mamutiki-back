@@ -26,6 +26,7 @@ module marketplace::campaign_manager {
         prompt: String,
         unit_price: u64,
         minimum_contribution: u64,
+        minimum_score: u64,
         reward_pool: u64,
         remaining_reward: u64,
         public_key_for_encryption: vector<u8>,
@@ -46,6 +47,8 @@ module marketplace::campaign_manager {
         title: String,
         reward_pool: u64,
         unit_price: u64,
+        minimum_contribution: u64,
+        minimum_score: u64,
         public_key_for_encryption: vector<u8>,
         timestamp: u64
     }
@@ -72,6 +75,7 @@ module marketplace::campaign_manager {
         prompt: String,
         unit_price: u64,
         minimum_contribution: u64,
+        minimum_score: u64,
         reward_pool: u64,
         public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
@@ -100,6 +104,7 @@ module marketplace::campaign_manager {
             prompt,
             unit_price,
             minimum_contribution,
+            minimum_score,
             reward_pool,
             remaining_reward: reward_pool,
             public_key_for_encryption,
@@ -114,6 +119,8 @@ module marketplace::campaign_manager {
             title,
             reward_pool,
             unit_price,
+            minimum_contribution,
+            minimum_score,
             public_key_for_encryption,
             timestamp: timestamp::now_seconds(),
         });
@@ -176,6 +183,13 @@ module marketplace::campaign_manager {
         campaign.minimum_contribution
     }
 
+    // Returns the minimum score of a campaign
+    #[view]
+    public fun get_minimum_score(campaign_id: u64): u64 acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.minimum_score
+    }
+
     // Returns the public key for encryption of a campaign
     #[view]
     public fun get_public_key_for_encryption(campaign_id: u64): vector<u8> acquires CampaignStore {
@@ -226,11 +240,12 @@ module marketplace::campaign_manager {
         let prompt = string::utf8(b"Test Prompt");
         let unit_price = 100;
         let minimum_contribution = 0;
+        let minimum_score = 0;
         let reward_pool = 1000;
         let public_key_for_encryption = b"Test Public Key";
         
         // Create campaign
-        create_campaign(&test_account, title, description, prompt, unit_price, minimum_contribution, reward_pool, public_key_for_encryption);
+        create_campaign(&test_account, title, description, prompt, unit_price, minimum_contribution, minimum_score, reward_pool, public_key_for_encryption);
         
         // Check campaign
         let campaign = get_campaign(1);
@@ -240,9 +255,10 @@ module marketplace::campaign_manager {
         assert!(campaign.prompt == prompt, 4);
         assert!(campaign.unit_price == unit_price, 5);
         assert!(campaign.minimum_contribution == minimum_contribution, 6);
-        assert!(campaign.reward_pool == reward_pool, 7);
-        assert!(campaign.public_key_for_encryption == public_key_for_encryption, 8);
-        assert!(campaign.active == true, 9);
+        assert!(campaign.minimum_score == minimum_score, 7);
+        assert!(campaign.reward_pool == reward_pool, 8);
+        assert!(campaign.public_key_for_encryption == public_key_for_encryption, 9);
+        assert!(campaign.active == true, 10);
 
         // Clean up capabilities
         coin::destroy_burn_cap(burn_cap);
@@ -282,6 +298,7 @@ module marketplace::campaign_manager {
             string::utf8(b"Prompt 1"),
             100,
             0,
+            70,
             1000,
             b"Test Public Key"
         );
@@ -293,6 +310,7 @@ module marketplace::campaign_manager {
             string::utf8(b"Prompt 2"),
             200,
             0,
+            70,
             2000,
             b"Test Public Key"
         );
@@ -306,8 +324,12 @@ module marketplace::campaign_manager {
         
         assert!(campaign1.unit_price == 100, 2);
         assert!(campaign2.unit_price == 200, 3);
-        assert!(campaign1.reward_pool == 1000, 4);
-        assert!(campaign2.reward_pool == 2000, 5);
+        assert!(campaign1.minimum_contribution == 0, 4);
+        assert!(campaign2.minimum_contribution == 0, 5);
+        assert!(campaign1.minimum_score == 70, 6);
+        assert!(campaign2.minimum_score == 70, 7);
+        assert!(campaign1.reward_pool == 1000, 8);
+        assert!(campaign2.reward_pool == 2000, 9);
 
         // Clean up capabilities
         coin::destroy_burn_cap(burn_cap);
@@ -341,6 +363,10 @@ module marketplace::campaign_manager {
         
         // Prepare test data
         let unit_price = 150;
+        let minimum_contribution = 0;
+        let minimum_score = 0;
+        let reward_pool = 1000;
+        let public_key_for_encryption = b"Test Public Key";
         
         // Create campaign
         create_campaign(
@@ -349,9 +375,10 @@ module marketplace::campaign_manager {
             string::utf8(b"Test Description"),
             string::utf8(b"Test Data Spec"),
             unit_price,
-            0,
-            1000,
-            b"Test Public Key"
+            minimum_contribution,
+            minimum_score,
+            reward_pool,
+            public_key_for_encryption
         );
         
         // Check unit price
@@ -410,6 +437,7 @@ module marketplace::campaign_manager {
             string::utf8(b"Test Prompt"),
             100, // unit_price
             5, // minimum_contribution > 0, so it should error
+            70, // minimum_score
             1000, // reward_pool
             b"Test Public Key"
         );
