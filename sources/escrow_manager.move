@@ -83,18 +83,23 @@ module marketplace::escrow_manager {
     ) acquires EscrowStore {
         let store = borrow_global_mut<EscrowStore>(@marketplace);
         
-        // Check if there are locked funds for the campaign
         assert!(table::contains(&store.escrows, campaign_id), ERR_ESCROW_NOT_FOUND);
 
         let locked_amount = *table::borrow(&store.escrows, campaign_id);
-        assert!(locked_amount >= amount, ERR_NOT_ENOUGH_BALANCE);
 
-        // Update the locked amount
-        table::upsert(&mut store.escrows, campaign_id, locked_amount - amount);
+        let platform_fee = amount * 2 / 100;
+        let total_deduction = amount + platform_fee;
+        assert!(locked_amount >= total_deduction, ERR_NOT_ENOUGH_BALANCE);
 
-        // Transfer directly from store_addr
+        // Update the locked amount (amount + fee)
+        table::upsert(&mut store.escrows, campaign_id, locked_amount - total_deduction);
+
         let account_signer = account::create_signer_with_capability(&store.signer_cap);
+        
+        // Contributor gets the full amount
         coin::transfer<AptosCoin>(&account_signer, recipient, amount);
+        // Platform fee is deducted from the pool
+        coin::transfer<AptosCoin>(&account_signer, @marketplace, platform_fee);
     }
 
     // Displays the amount of locked funds
