@@ -1,10 +1,12 @@
 module marketplace::subscription_manager {
     use std::signer;
-    use aptos_framework::account::{Self, SignerCapability};
     use aptos_framework::coin;
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::timestamp;
     use std::table::{Self, Table};
+
+    #[test_only]
+    use aptos_framework::account;
 
     /// Structure that holds the subscription price
     struct SubscriptionPrice has key {
@@ -13,8 +15,7 @@ module marketplace::subscription_manager {
 
     /// Structure that holds subscriptions
     struct Subscriptions has key {
-        subscriptions: Table<address, u64>, // address -> expiration time
-        signer_capability: SignerCapability
+        subscriptions: Table<address, u64> // address -> expiration time
     }
 
     /// Error codes
@@ -28,11 +29,6 @@ module marketplace::subscription_manager {
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
     fun init_module(creator: &signer) {
-        let (resource_signer, resource_signer_cap) = account::create_resource_account(creator, b"subscription");
-        
-        // Create coin store for resource account
-        coin::register<AptosCoin>(&resource_signer);
-
         // Set initial price
         move_to(creator, SubscriptionPrice {
             price: INITIAL_PRICE
@@ -40,8 +36,7 @@ module marketplace::subscription_manager {
 
         // Create subscription table
         move_to(creator, Subscriptions {
-            subscriptions: table::new(),
-            signer_capability: resource_signer_cap
+            subscriptions: table::new()
         });
     }
 
@@ -67,10 +62,8 @@ module marketplace::subscription_manager {
             assert!(current_time > *end_time, EACTIVE_SUBSCRIPTION_EXISTS);
         };
         
-        // Process payment
-        let resource_signer = account::create_signer_with_capability(&subscriptions.signer_capability);
-        
-        coin::transfer<AptosCoin>(subscriber, signer::address_of(&resource_signer), price);
+        // Process payment directly to marketplace address
+        coin::transfer<AptosCoin>(subscriber, @marketplace, price);
 
         // Set subscription duration
         let end_time = timestamp::now_seconds() + SUBSCRIPTION_DURATION;
@@ -126,10 +119,8 @@ module marketplace::subscription_manager {
         // Initialize AptosCoin for testing
         let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(framework);
 
-        // Register coin store for creator
+        // Register coin store for creator and initialize module
         coin::register<AptosCoin>(creator);
-
-        // Initialize module
         init_module(creator);
 
         // Give test coins to subscriber (100 APT)
