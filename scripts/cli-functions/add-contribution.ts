@@ -2,28 +2,32 @@ import { initSDK } from "./init-sdk";
 import { DEFAULT_VALUES } from "../utils/constants";
 import DataSigner from "../classes/DataSigner";
 
-export default async function addTrustedKey(campaignID_string: string) {
+export default async function addContribution(campaignID_string: string) {
   try {
     const sdk = await initSDK();
 
     const dataSigner = new DataSigner();
 
     const campaignId = parseInt(campaignID_string);
-    const { dataCount, storeCid, score } = DEFAULT_VALUES.contribution;
+    const { dataCount, storeCid, score, keyForDecryption } = DEFAULT_VALUES.contribution;
 
     // Katkı verilerini imzala
     const signature = dataSigner.signContributionData(
+      sdk.account.getAccount().address().toString(),
       campaignId,
       dataCount,
       storeCid,
-      score
+      score,
+      keyForDecryption
     );
 
     console.log("\nKatkı ekleniyor...");
+    console.log("Sender:", sdk.account.getAccount().address().toString());
     console.log("Campaign ID:", campaignId);
     console.log("Data Count:", dataCount);
     console.log("Store CID:", storeCid);
     console.log("Score:", score);
+    console.log("Key For Decryption:", keyForDecryption);
     console.log("Signature:", signature);
 
     const txn = await sdk.contribution.addContribution(
@@ -31,6 +35,7 @@ export default async function addTrustedKey(campaignID_string: string) {
       dataCount,
       storeCid,
       score,
+      keyForDecryption,
       signature
     );
     console.log("\nKatkı başarıyla eklendi!");

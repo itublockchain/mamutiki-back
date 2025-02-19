@@ -1,17 +1,27 @@
 import BaseManager from "./BaseManager";
 import AptosUtils from "../utils/AptosUtils";
 import { Campaign } from "../types";
-
+import { generateKeyPairSync } from 'crypto';
 // Campaign Manager
 class CampaignManager extends BaseManager {
+  
   async createCampaign(
     title: string,
     description: string,
     prompt: string,
     unitPrice: number,
     minimumContribution: number,
-    rewardPool: number
+    rewardPool: number,
+    publicKeyForEncryption: string
   ): Promise<string> {
+    // String'i UTF-8 byte array'ine çevirme
+        // 2048-bit RSA Key çifti oluştur
+    const { publicKey, privateKey } = generateKeyPairSync('rsa', {
+      modulusLength: 2048,
+      publicKeyEncoding: { type: 'spki', format: 'der' }, // DER formatında binary olarak sakla
+      privateKeyEncoding: { type: 'pkcs8', format: 'der' }, // DER formatında binary olarak sakla
+    });
+
     const payload = AptosUtils.createEntryPayload(
       `${this.moduleAddress}::campaign_manager::create_campaign`,
       [
@@ -21,6 +31,7 @@ class CampaignManager extends BaseManager {
         unitPrice.toString(),
         minimumContribution.toString(),
         rewardPool.toString(),
+        publicKey, 
       ]
     );
 
@@ -63,6 +74,7 @@ class CampaignManager extends BaseManager {
       remaining_reward: Number(response.remaining_reward),
       unit_price: Number(response.unit_price),
       minimum_contribution: Number(response.minimum_contribution),
+      public_key_for_encryption: response.public_key_for_encryption,
       active: response.active,
     };
   }

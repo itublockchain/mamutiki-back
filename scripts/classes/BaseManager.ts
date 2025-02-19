@@ -19,6 +19,11 @@ class BaseManager {
     this.account = account;
   }
 
+  getAccount(): AptosAccount {
+    if (!this.account) throw new Error("Account not set");
+    return this.account;
+  }
+
   protected async executeTransaction(
     payload: Types.EntryFunctionPayload
   ): Promise<string> {

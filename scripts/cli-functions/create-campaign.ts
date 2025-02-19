@@ -1,6 +1,7 @@
 import { initSDK } from "./init-sdk";
 import { DEFAULT_VALUES } from "../utils/constants";
 
+
 export default async function createCampaign() {
   try {
     const sdk = await initSDK();
@@ -12,6 +13,7 @@ export default async function createCampaign() {
       unitPrice,
       minContribution,
       rewardPool,
+      publicKeyForEncryption,
     } = DEFAULT_VALUES.campaign;
 
     // APT miktarlarını octa'ya çevirme (1 APT = 100_000_000 octa)
@@ -26,6 +28,7 @@ export default async function createCampaign() {
     console.log("Unit Price:", unitPrice, "APT");
     console.log("Minimum Contribution:", minContribution, "APT");
     console.log("Reward Pool:", rewardPool, "APT");
+    console.log("Public Key for Encryption:", publicKeyForEncryption);
 
     const txn = await sdk.campaign.createCampaign(
       title,
@@ -33,7 +36,8 @@ export default async function createCampaign() {
       prompt,
       unitPriceOcta,
       minContribOcta,
-      rewardPoolOcta
+      rewardPoolOcta,
+      publicKeyForEncryption
     );
     console.log("\nKampanya başarıyla oluşturuldu!");
     console.log("Transaction Hash:", txn);

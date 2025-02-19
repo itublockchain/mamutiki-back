@@ -33,6 +33,7 @@ export default async function listCampaigns() {
         "APT"
       );
       console.log("Active:", campaign.active);
+      console.log("Public Key for Encryption:", campaign.public_key_for_encryption);
       console.log("----------------------------------------");
     });
   } catch (error) {

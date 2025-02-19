@@ -18,6 +18,7 @@ class ContributionManager extends BaseManager {
     dataCount: number,
     storeCid: string,
     score: number,
+    keyForDecryption: string,
     signature: string
   ): Promise<string> {
     const payload = AptosUtils.createEntryPayload(
@@ -27,6 +28,7 @@ class ContributionManager extends BaseManager {
         dataCount.toString(),
         storeCid,
         score.toString(),
+        keyForDecryption,
         AptosUtils.hexToBytes(signature),
       ]
     );
@@ -71,6 +73,7 @@ class ContributionManager extends BaseManager {
       data_count: Number(response.data_count),
       store_cid: AptosUtils.bytesToString(response.store_cid),
       score: Number(response.score),
+      key_for_decryption: AptosUtils.bytesToString(response.key_for_decryption),
       signature: Buffer.from(response.signature).toString("hex"),
     };
   }

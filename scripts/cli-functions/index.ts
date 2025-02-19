@@ -4,6 +4,8 @@ import listCampaigns from "./list-campaigns";
 import addContribution from "./add-contribution";
 import listContributions from "./list-contributions";
 import help from "./help";
+import subscribe from "./subscribe";
+import updatePrice from "./update-price";
 
 export default {
   addTrustedKey,
@@ -12,4 +14,6 @@ export default {
   addContribution,
   listContributions,
   help,
+  subscribe,
+  updatePrice,
 };

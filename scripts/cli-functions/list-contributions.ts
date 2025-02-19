@@ -1,6 +1,6 @@
 import { initSDK } from "./init-sdk";
 
-export default async function addTrustedKey(campaignId_string: string) {
+export default async function listContributions(campaignId_string: string) {
   try {
     const sdk = await initSDK();
 

@@ -34,6 +34,14 @@ mamutiki
   .argument("<campaignId>")
   .action(async (campaignId) => await cli.listContributions(campaignId));
 
+mamutiki
+  .command("subscribe")
+  .action(async () => await cli.subscribe());
+
+mamutiki
+  .command("update-price")
+  .action(async () => await cli.updatePrice());
+
 mamutiki.command("help").action(async () => await cli.help());
 
 mamutiki.parse(process.argv);
