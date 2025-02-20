@@ -6,17 +6,14 @@ module marketplace::campaign_manager {
     use std::event;
     use std::timestamp;
     use aptos_framework::account;
-    use aptos_framework::resource_account;
-    use aptos_framework::ed25519;
-    use std::bcs;
-
+    use marketplace::subscription_manager;
+    
     #[test_only]
     use std::string::{Self};
     #[test_only]
     use aptos_framework::aptos_coin;
     #[test_only]
     use aptos_framework::coin;
-
 
     friend marketplace::contribution_manager;
 
@@ -27,10 +24,12 @@ module marketplace::campaign_manager {
         title: String,
         description: String,
         prompt: String,
-        reward_pool: u64,
-        remaining_reward: u64,
         unit_price: u64,
         minimum_contribution: u64,
+        minimum_score: u64,
+        reward_pool: u64,
+        remaining_reward: u64,
+        public_key_for_encryption: vector<u8>,
         active: bool,
     }
     
@@ -48,35 +47,24 @@ module marketplace::campaign_manager {
         title: String,
         reward_pool: u64,
         unit_price: u64,
+        minimum_contribution: u64,
+        minimum_score: u64,
+        public_key_for_encryption: vector<u8>,
         timestamp: u64
     }
 
-    struct HashStore has key {
-        hashes: table::Table<vector<u8>, u64>,
-        signer_cap: account::SignerCapability
-    }
-
-    const SEED: vector<u8> = b"MARKETPLACE_RESOURCE_ACCOUNT";
-    const ERR_UNAUTHORIZED: u64 = 1000;
+    const ERR_NO_SUBSCRIPTION: u64 = 1001;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
-        let (resource_signer, signer_cap) = resource_account::create_resource_account(account, SEED);
-        
         let store = CampaignStore {
             campaigns: table::new<u64, Campaign>(),
             next_id: 1,
             create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
-
-        let hash_store = HashStore {
-            hashes: table::new<vector<u8>, u64>(),
-            signer_cap
-        };
-        move_to(&resource_signer, hash_store);
     }
 
     // Creates a new campaign and adds it to the store.
@@ -87,8 +75,18 @@ module marketplace::campaign_manager {
         prompt: String,
         unit_price: u64,
         minimum_contribution: u64,
-        reward_pool: u64
+        minimum_score: u64,
+        reward_pool: u64,
+        public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
+
+        let (has_subscription, _) = subscription_manager::check_subscription(signer::address_of(account));
+        
+        // If there is no subscription, minimum_contribution must be 0
+        if (!has_subscription) {
+            assert!(minimum_contribution == 0, ERR_NO_SUBSCRIPTION);
+        };
+
         // Get store from module address
         let module_addr = @marketplace;
         let store_ref = borrow_global_mut<CampaignStore>(module_addr);
@@ -106,8 +104,10 @@ module marketplace::campaign_manager {
             prompt,
             unit_price,
             minimum_contribution,
+            minimum_score,
             reward_pool,
             remaining_reward: reward_pool,
+            public_key_for_encryption,
             active: true,
         };
         table::add(&mut store_ref.campaigns, id, new_campaign);
@@ -119,6 +119,9 @@ module marketplace::campaign_manager {
             title,
             reward_pool,
             unit_price,
+            minimum_contribution,
+            minimum_score,
+            public_key_for_encryption,
             timestamp: timestamp::now_seconds(),
         });
     }
@@ -152,13 +155,6 @@ module marketplace::campaign_manager {
         campaigns
     }
 
-    // Returns the unit price of a campaign
-    #[view]
-    public fun get_unit_price(campaign_id: u64): u64 acquires CampaignStore {
-        let campaign = get_campaign(campaign_id);
-        campaign.unit_price
-    }
-
     #[view]
     public(friend) fun get_all_campaign_ids(): vector<u64> acquires CampaignStore {
         let store = borrow_global<CampaignStore>(@marketplace);
@@ -171,6 +167,41 @@ module marketplace::campaign_manager {
             i = i + 1;
         };
         campaign_ids
+    }
+
+    // Returns the unit price of a campaign
+    #[view]
+    public fun get_unit_price(campaign_id: u64): u64 acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.unit_price
+    }
+
+    // Returns the minimum contribution of a campaign
+    #[view]
+    public fun get_minimum_contribution(campaign_id: u64): u64 acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.minimum_contribution
+    }
+
+    // Returns the minimum score of a campaign
+    #[view]
+    public fun get_minimum_score(campaign_id: u64): u64 acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.minimum_score
+    }
+
+    // Returns the public key for encryption of a campaign
+    #[view]
+    public fun get_public_key_for_encryption(campaign_id: u64): vector<u8> acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.public_key_for_encryption
+    }
+
+    // Returns the creator of a campaign
+    #[view]
+    public fun get_campaign_creator(campaign_id: u64): address acquires CampaignStore {
+        let campaign = get_campaign(campaign_id);
+        campaign.creator
     }
 
     #[test_only]
@@ -194,10 +225,12 @@ module marketplace::campaign_manager {
 
         // Create coin records for test accounts and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(10000, &mint_cap);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&test_account), coins);
         
         // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
         init_module(&campaign_manager);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
@@ -207,10 +240,12 @@ module marketplace::campaign_manager {
         let prompt = string::utf8(b"Test Prompt");
         let unit_price = 100;
         let minimum_contribution = 0;
+        let minimum_score = 0;
         let reward_pool = 1000;
+        let public_key_for_encryption = b"Test Public Key";
         
         // Create campaign
-        create_campaign(&test_account, title, description, prompt, unit_price, minimum_contribution, reward_pool);
+        create_campaign(&test_account, title, description, prompt, unit_price, minimum_contribution, minimum_score, reward_pool, public_key_for_encryption);
         
         // Check campaign
         let campaign = get_campaign(1);
@@ -220,8 +255,10 @@ module marketplace::campaign_manager {
         assert!(campaign.prompt == prompt, 4);
         assert!(campaign.unit_price == unit_price, 5);
         assert!(campaign.minimum_contribution == minimum_contribution, 6);
-        assert!(campaign.reward_pool == reward_pool, 7);
-        assert!(campaign.active == true, 8);
+        assert!(campaign.minimum_score == minimum_score, 7);
+        assert!(campaign.reward_pool == reward_pool, 8);
+        assert!(campaign.public_key_for_encryption == public_key_for_encryption, 9);
+        assert!(campaign.active == true, 10);
 
         // Clean up capabilities
         coin::destroy_burn_cap(burn_cap);
@@ -244,10 +281,12 @@ module marketplace::campaign_manager {
 
         // Create coin records for test accounts and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(20000, &mint_cap);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&test_account), coins);
         
         // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
         init_module(&campaign_manager);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
@@ -259,7 +298,9 @@ module marketplace::campaign_manager {
             string::utf8(b"Prompt 1"),
             100,
             0,
-            1000
+            70,
+            1000,
+            b"Test Public Key"
         );
         
         create_campaign(
@@ -269,7 +310,9 @@ module marketplace::campaign_manager {
             string::utf8(b"Prompt 2"),
             200,
             0,
-            2000
+            70,
+            2000,
+            b"Test Public Key"
         );
         
         // Get all campaigns and check
@@ -281,8 +324,12 @@ module marketplace::campaign_manager {
         
         assert!(campaign1.unit_price == 100, 2);
         assert!(campaign2.unit_price == 200, 3);
-        assert!(campaign1.reward_pool == 1000, 4);
-        assert!(campaign2.reward_pool == 2000, 5);
+        assert!(campaign1.minimum_contribution == 0, 4);
+        assert!(campaign2.minimum_contribution == 0, 5);
+        assert!(campaign1.minimum_score == 70, 6);
+        assert!(campaign2.minimum_score == 70, 7);
+        assert!(campaign1.reward_pool == 1000, 8);
+        assert!(campaign2.reward_pool == 2000, 9);
 
         // Clean up capabilities
         coin::destroy_burn_cap(burn_cap);
@@ -305,15 +352,21 @@ module marketplace::campaign_manager {
 
         // Create coin records for test accounts and add balance
         coin::register<aptos_coin::AptosCoin>(&test_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(10000, &mint_cap);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
         coin::deposit(signer::address_of(&test_account), coins);
         
         // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
         init_module(&campaign_manager);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
         // Prepare test data
         let unit_price = 150;
+        let minimum_contribution = 0;
+        let minimum_score = 0;
+        let reward_pool = 1000;
+        let public_key_for_encryption = b"Test Public Key";
         
         // Create campaign
         create_campaign(
@@ -322,8 +375,10 @@ module marketplace::campaign_manager {
             string::utf8(b"Test Description"),
             string::utf8(b"Test Data Spec"),
             unit_price,
-            0,
-            1000
+            minimum_contribution,
+            minimum_score,
+            reward_pool,
+            public_key_for_encryption
         );
         
         // Check unit price
@@ -348,24 +403,47 @@ module marketplace::campaign_manager {
         get_campaign(999);
     }
 
-    public fun sign_hash(account: &signer, campaign_id: u64, hash: vector<u8>): vector<u8> acquires HashStore, CampaignStore {
-        let hash_store = borrow_global_mut<HashStore>(@marketplace);
-        let campaign = get_campaign(campaign_id);
+    #[test]
+    #[expected_failure(abort_code = 1001, location = marketplace::campaign_manager)]
+    fun test_create_campaign_without_subscription() acquires CampaignStore {
+        // Create test accounts
+        let test_account = account::create_account_for_test(@0x1);
+        let campaign_manager = account::create_account_for_test(@marketplace);
+        let escrow_manager = account::create_account_for_test(@marketplace);
+        let framework_signer = account::create_account_for_test(@aptos_framework);
         
-        if (table::contains(&hash_store.hashes, hash)) {
-            let stored_campaign_id = *table::borrow(&hash_store.hashes, hash);
-            let stored_campaign = get_campaign(stored_campaign_id);
-            assert!(stored_campaign.creator == signer::address_of(account), ERR_UNAUTHORIZED);
-        } else {
-            table::add(&mut hash_store.hashes, hash, campaign_id);
-        };
+        // Initialize timestamp for testing
+        timestamp::set_time_has_started_for_testing(&framework_signer);
+        
+        // Initialize AptosCoin
+        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
 
-        let resource_signer = account::create_signer_with_capability(&hash_store.signer_cap);
-        let resource_account_addr = signer::address_of(&resource_signer);
-        let public_key = ed25519::new_validated_public_key_from_bytes(
-            *resource_account::get_authentication_key(&resource_account_addr)
-        );
+        // Create coin record for test account and add balance
+        coin::register<aptos_coin::AptosCoin>(&test_account);
+        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
+        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
+        coin::deposit(signer::address_of(&test_account), coins);
         
-        ed25519::sign_struct(&resource_signer, hash, public_key)
+        // Initialize modules
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
+        init_module(&campaign_manager);
+        marketplace::escrow_manager::initialize_for_test(&escrow_manager);
+        
+        // User without subscription tries to create a campaign with non-zero minimum_contribution
+        create_campaign(
+            &test_account,
+            string::utf8(b"Test Campaign"),
+            string::utf8(b"Test Description"),
+            string::utf8(b"Test Prompt"),
+            100, // unit_price
+            5, // minimum_contribution > 0, so it should error
+            70, // minimum_score
+            1000, // reward_pool
+            b"Test Public Key"
+        );
+
+        // Cleanup
+        coin::destroy_burn_cap(burn_cap);
+        coin::destroy_mint_cap(mint_cap);
     }
 }

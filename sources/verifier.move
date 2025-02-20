@@ -74,13 +74,16 @@ module marketplace::verifier {
 
     // Verify signature for contribution data
     public(friend) fun verify_contribution_signature(
+        sender: address,
         campaign_id: u64,
         data_count: u64,
         store_cid: String,
         score: u64,
+        key_for_decryption: String,
         signature: vector<u8>
     ): bool acquires TrustedPublicKeys {
         let message = vector::empty<u8>();
+        vector::append(&mut message, bcs::to_bytes(&sender));
         vector::append(&mut message, bcs::to_bytes(&campaign_id));
         vector::append(&mut message, bcs::to_bytes(&data_count));
         
@@ -90,6 +93,10 @@ module marketplace::verifier {
         
         vector::append(&mut message, bcs::to_bytes(&score));
 
+        let key_for_decryption_bytes = string::bytes(&key_for_decryption);
+        vector::append(&mut message, bcs::to_bytes(&(key_for_decryption_bytes.length() as u64)));
+        vector::append(&mut message, *key_for_decryption_bytes);
+        
         let message_hash = hash::sha2_256(message);
         let signature = ed25519::new_signature_from_bytes(signature);
         
