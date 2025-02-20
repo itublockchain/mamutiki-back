@@ -1,4 +1,4 @@
-import { Argument, Command } from "commander";
+import { Command } from "commander";
 
 import * as dotenv from "dotenv";
 dotenv.config();
