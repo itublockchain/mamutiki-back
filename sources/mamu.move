@@ -74,7 +74,7 @@ module marketplace::mamu {
     }
 
     /// Mint new MAMU tokens to an account
-    public fun mint_to(_admin: &signer, recipient: address, amount: u64) acquires MovementCapabilities {
+    public entry fun mint_to(_admin: &signer, recipient: address, amount: u64) acquires MovementCapabilities {
         assert!(amount > 0, EZERO_MINT_AMOUNT);
         let caps = borrow_global<MovementCapabilities>(@marketplace);
         let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
@@ -84,7 +84,7 @@ module marketplace::mamu {
     /// =================== User Functions ===================
 
     /// Transfer MAMU between accounts
-    public fun transfer(from: &signer, to: address, amount: u64) {
+    public entry fun transfer(from: &signer, to: address, amount: u64) {
         coin::transfer<MAMU>(from, to, amount);
     }
 

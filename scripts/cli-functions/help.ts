@@ -15,6 +15,9 @@ export default async function help() {
   console.log("\n5. Katkıları listeleme:");
   console.log("   npm run list-contributions -- <campaignId>");
 
-  console.log("\n6. Yardım:");
+  console.log("\n6. Token mintleme:");
+  console.log("   npm run mint-token -- <amount>");
+
+  console.log("\n7. Yardım:");
   console.log("   npm run help");
 }

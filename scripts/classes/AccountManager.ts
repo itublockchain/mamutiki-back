@@ -3,6 +3,7 @@ import { Account, Ed25519PrivateKey, Ed25519Account } from "@aptos-labs/ts-sdk";
 import CONFIG from "../utils/config";
 import { AccountBalance } from "../types";
 import AptosUtils from "../utils/AptosUtils";
+import { ONE_MAMU } from "../utils/constants";
 
 // Account Manager
 class AccountManager extends BaseManager {
@@ -47,6 +48,19 @@ class AccountManager extends BaseManager {
     if (!this.account) throw new Error("Account not set");
     //await this.faucetClient.fundAccount(this.account.address(), amount);
     await this.getBalance();
+  }
+
+  async mintToken(amount: number): Promise<string> {
+    if (!this.account) throw new Error("Account not set");
+
+    const txn = await this.executeTransaction({
+      type: "entry_function_payload",
+      function: `${this.moduleAddress}::mamu::mint_to`,
+      type_arguments: [],
+      arguments: [this.account.accountAddress, amount * ONE_MAMU],
+    });
+
+    return txn;
   }
 }
 

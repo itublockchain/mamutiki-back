@@ -4,7 +4,7 @@ import listCampaigns from "./list-campaigns";
 import addContribution from "./add-contribution";
 import listContributions from "./list-contributions";
 import help from "./help";
-
+import mintToken from "./mint-token";
 export default {
   addTrustedKey,
   createCampaign,
@@ -12,4 +12,5 @@ export default {
   addContribution,
   listContributions,
   help,
+  mintToken,
 };

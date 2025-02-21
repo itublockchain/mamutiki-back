@@ -34,6 +34,11 @@ mamutiki
   .argument("<campaignId>")
   .action(async (campaignId) => await cli.listContributions(campaignId));
 
+mamutiki
+  .command("mint-token")
+  .argument("<amount>")
+  .action(async (amount) => await cli.mintToken(amount));
+
 mamutiki.command("help").action(async () => await cli.help());
 
 mamutiki.parse(process.argv);
