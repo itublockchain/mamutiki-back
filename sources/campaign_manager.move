@@ -2,18 +2,15 @@ module marketplace::campaign_manager {
     use std::signer;
     use std::table;
     use std::vector;
-    use std::string::{String};
+    use std::string::String;
     use std::event;
     use std::timestamp;
     use aptos_framework::account;
     use marketplace::subscription_manager;
-    
+    use marketplace::mamu;
+
     #[test_only]
-    use std::string::{Self};
-    #[test_only]
-    use aptos_framework::aptos_coin;
-    #[test_only]
-    use aptos_framework::coin;
+    use std::string;
 
     friend marketplace::contribution_manager;
 
@@ -79,7 +76,6 @@ module marketplace::campaign_manager {
         reward_pool: u64,
         public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
-
         let (has_subscription, _) = subscription_manager::check_subscription(signer::address_of(account));
         
         // If there is no subscription, minimum_contribution must be 0
@@ -213,25 +209,27 @@ module marketplace::campaign_manager {
     fun test_create_campaign() acquires CampaignStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
-        let campaign_manager = account::create_account_for_test(@marketplace);
+        let campaign_manager_account = account::create_account_for_test(@marketplace);
         let escrow_manager = account::create_account_for_test(@marketplace);
         let framework_signer = account::create_account_for_test(@aptos_framework);
         
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize AptosCoin
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+        // Initialize MAMU token
+        mamu::initialize_for_test(&campaign_manager_account);
 
-        // Create coin records for test accounts and add balance
-        coin::register<aptos_coin::AptosCoin>(&test_account);
-        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
-        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
-        coin::deposit(signer::address_of(&test_account), coins);
+        // Register accounts for MAMU
+        mamu::register(&test_account);
+        mamu::register(&campaign_manager_account);
+        mamu::register(&escrow_manager);
+
+        // Give test tokens to test account
+        mamu::mint_to(&campaign_manager_account, signer::address_of(&test_account), 1000_000_000_000);
         
-        // Initialize modules
-        marketplace::subscription_manager::initialize_for_test(&campaign_manager);
-        init_module(&campaign_manager);
+        // Initialize modules in correct order
+        marketplace::subscription_manager::initialize_for_test(&campaign_manager_account);
+        init_module(&campaign_manager_account);
         marketplace::escrow_manager::initialize_for_test(&escrow_manager);
         
         // Prepare test data
@@ -259,10 +257,6 @@ module marketplace::campaign_manager {
         assert!(campaign.reward_pool == reward_pool, 8);
         assert!(campaign.public_key_for_encryption == public_key_for_encryption, 9);
         assert!(campaign.active == true, 10);
-
-        // Clean up capabilities
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 
     #[test]
@@ -276,14 +270,15 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize AptosCoin
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+        // Initialize MAMU token
+        mamu::initialize_for_test(&campaign_manager);
 
-        // Create coin records for test accounts and add balance
-        coin::register<aptos_coin::AptosCoin>(&test_account);
-        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
-        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
-        coin::deposit(signer::address_of(&test_account), coins);
+        // Register accounts for MAMU
+        mamu::register(&test_account);
+        mamu::register(&campaign_manager);
+
+        // Give test tokens to test account
+        mamu::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules
         marketplace::subscription_manager::initialize_for_test(&campaign_manager);
@@ -330,10 +325,6 @@ module marketplace::campaign_manager {
         assert!(campaign2.minimum_score == 70, 7);
         assert!(campaign1.reward_pool == 1000, 8);
         assert!(campaign2.reward_pool == 2000, 9);
-
-        // Clean up capabilities
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 
     #[test]
@@ -347,14 +338,15 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize AptosCoin
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+        // Initialize MAMU token
+        mamu::initialize_for_test(&campaign_manager);
 
-        // Create coin records for test accounts and add balance
-        coin::register<aptos_coin::AptosCoin>(&test_account);
-        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
-        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
-        coin::deposit(signer::address_of(&test_account), coins);
+        // Register accounts for MAMU
+        mamu::register(&test_account);
+        mamu::register(&campaign_manager);
+
+        // Give test tokens to test account
+        mamu::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules
         marketplace::subscription_manager::initialize_for_test(&campaign_manager);
@@ -384,10 +376,6 @@ module marketplace::campaign_manager {
         // Check unit price
         let price = get_unit_price(1);
         assert!(price == unit_price, 1);
-
-        // Clean up capabilities
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 
     #[test]
@@ -404,7 +392,7 @@ module marketplace::campaign_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 1001, location = marketplace::campaign_manager)]
+    #[expected_failure(abort_code = ERR_NO_SUBSCRIPTION)]
     fun test_create_campaign_without_subscription() acquires CampaignStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
@@ -415,14 +403,15 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize AptosCoin
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+        // Initialize MAMU token
+        mamu::initialize_for_test(&campaign_manager);
 
-        // Create coin record for test account and add balance
-        coin::register<aptos_coin::AptosCoin>(&test_account);
-        coin::register<aptos_coin::AptosCoin>(&campaign_manager);
-        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
-        coin::deposit(signer::address_of(&test_account), coins);
+        // Register accounts for MAMU
+        mamu::register(&test_account);
+        mamu::register(&campaign_manager);
+
+        // Give test tokens to test account
+        mamu::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules
         marketplace::subscription_manager::initialize_for_test(&campaign_manager);
@@ -441,9 +430,5 @@ module marketplace::campaign_manager {
             1000, // reward_pool
             b"Test Public Key"
         );
-
-        // Cleanup
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 }

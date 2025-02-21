@@ -2,21 +2,15 @@ module marketplace::contribution_manager {
     use std::signer;
     use std::vector;
     use std::table::{Self, Table};
-    use std::string::{String};
+    use std::string::{Self, String};
     use std::event;
-    use aptos_framework::timestamp;
+    use std::timestamp;
     use aptos_framework::account;
 
     use marketplace::campaign_manager;
     use marketplace::escrow_manager;
     use marketplace::verifier;
-
-    #[test_only]
-    use aptos_framework::aptos_coin;
-    #[test_only]
-    use aptos_framework::coin;
-    #[test_only]
-    use std::string::{Self};
+    use marketplace::mamu;
 
     // Sturctre of Contribution
     struct Contribution has store, drop, copy {
@@ -33,6 +27,7 @@ module marketplace::contribution_manager {
     struct ContributionStore has key {
         contributions: Table<u64, vector<Contribution>>, // campaign_id -> contributions
         contribution_events: event::EventHandle<ContributionEvent>,
+        next_id: u64,
     }
 
     // Event structure for contribution.
@@ -52,11 +47,13 @@ module marketplace::contribution_manager {
     const ERR_ALREADY_CONTRIBUTED: u64 = 7;
     const ERR_INSUFFICIENT_CONTRIBUTION: u64 = 8;
     const ERR_INSUFFICIENT_SCORE: u64 = 9;
+    const ERR_NO_TRUSTED_KEYS: u64 = 10;
 
     fun init_module(account: &signer) {
         let store = ContributionStore {
             contributions: table::new(),
             contribution_events: account::new_event_handle<ContributionEvent>(account),
+            next_id: 0,
         };
         move_to(account, store);
 
@@ -85,37 +82,55 @@ module marketplace::contribution_manager {
 
     // Add a new contribution
     public entry fun add_contribution(
-        account: &signer,
+        contributor: &signer,
         campaign_id: u64,
         data_count: u64,
         store_cid: String,
         score: u64,
         key_for_decryption: String,
-        signature: vector<u8>,
+        signature: vector<u8>
     ) acquires ContributionStore {
-        
-        let contributor = signer::address_of(account);
-
         // Verify the signature
         assert!(
-            verifier::verify_contribution_signature(contributor, campaign_id, data_count, store_cid, score, key_for_decryption, signature),
+            verifier::verify_contribution_signature(
+                signer::address_of(contributor),
+                campaign_id,
+                data_count,
+                store_cid,
+                score,
+                key_for_decryption,
+                signature
+            ),
             ERR_NO_VALID_SIGNATURE
         );
-        
+
         // Check if user has already contributed to this campaign
-        assert!(!has_contributed(campaign_id, contributor), ERR_ALREADY_CONTRIBUTED);
+        assert!(!has_contributed(campaign_id, signer::address_of(contributor)), ERR_ALREADY_CONTRIBUTED);
 
-        // Check if the contribution amount is greater than the minimum contribution
+        // Get campaign details
+        let unit_price = campaign_manager::get_unit_price(campaign_id);
         let minimum_contribution = campaign_manager::get_minimum_contribution(campaign_id);
-        assert!(get_contributor_contributions(contributor).length() >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
-
-        // Check if the contribution score is greater than the minimum score
         let minimum_score = campaign_manager::get_minimum_score(campaign_id);
+
+        // Check contribution requirements
+        assert!(data_count >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
         assert!(score >= minimum_score, ERR_INSUFFICIENT_SCORE);
 
-        let contribution = Contribution {
+        // Calculate reward
+        let reward = unit_price * data_count;
+
+        // Release funds from escrow
+        escrow_manager::release_funds_for_contribution(
             campaign_id,
-            contributor: signer::address_of(account),
+            signer::address_of(contributor),
+            reward
+        );
+
+        // Store contribution
+        let store = borrow_global_mut<ContributionStore>(@marketplace);
+        let contribution = Contribution {
+            contributor: signer::address_of(contributor),
+            campaign_id,
             data_count,
             store_cid,
             score,
@@ -123,8 +138,6 @@ module marketplace::contribution_manager {
             signature
         };
 
-        let store = borrow_global_mut<ContributionStore>(@marketplace);
-        
         if (!table::contains(&store.contributions, campaign_id)) {
             table::add(&mut store.contributions, campaign_id, vector::empty<Contribution>());
         };
@@ -132,24 +145,18 @@ module marketplace::contribution_manager {
         let contributions = table::borrow_mut(&mut store.contributions, campaign_id);
         vector::push_back(contributions, contribution);
 
-        let unit_price = campaign_manager::get_unit_price(campaign_id);
-        let total_reward = data_count * unit_price;
-        
-        escrow_manager::release_funds_for_contribution(
-            campaign_id,
-            signer::address_of(account),
-            total_reward
+        // Emit event
+        event::emit_event(
+            &mut store.contribution_events,
+            ContributionEvent {
+                campaign_id,
+                contributor: signer::address_of(contributor),
+                data_count,
+                score,
+                reward_amount: reward,
+                timestamp: timestamp::now_seconds(),
+            }
         );
-
-        // Emit the event
-        event::emit_event(&mut store.contribution_events, ContributionEvent {
-            campaign_id,
-            contributor: signer::address_of(account),
-            data_count,
-            score,
-            reward_amount: total_reward,
-            timestamp: timestamp::now_seconds(),
-        });
     }
 
     // Get all contributions
@@ -180,7 +187,7 @@ module marketplace::contribution_manager {
     public fun get_campaign_contributions(campaign_id: u64): vector<Contribution> acquires ContributionStore {
         let store = borrow_global<ContributionStore>(@marketplace);
         if (!table::contains(&store.contributions, campaign_id)) {
-            return vector::empty<Contribution>();
+            return vector::empty<Contribution>()
         };
         *table::borrow(&store.contributions, campaign_id)
     }
@@ -211,7 +218,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)]
+    #[expected_failure(abort_code = 65538)]  // Ed25519 E_WRONG_SIGNATURE_SIZE
     fun test_add_contribution() acquires ContributionStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
@@ -223,14 +230,17 @@ module marketplace::contribution_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize AptosCoin
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+        // Initialize MAMU token
+        mamu::initialize_for_test(&campaign_manager_account);
 
-        // Register coin stores and add balance
-        coin::register<aptos_coin::AptosCoin>(&test_account);
-        coin::register<aptos_coin::AptosCoin>(&campaign_manager_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
-        coin::deposit(signer::address_of(&campaign_manager_account), coins);
+        // Register accounts for MAMU
+        mamu::register(&test_account);
+        mamu::register(&campaign_manager_account);
+        mamu::register(&escrow_manager);
+
+        // Give test tokens to accounts
+        mamu::mint_to(&campaign_manager_account, signer::address_of(&test_account), 1000_000_000_000);
+        mamu::mint_to(&campaign_manager_account, signer::address_of(&campaign_manager_account), 1000_000_000_000);
         
         // Initialize modules in correct order
         marketplace::subscription_manager::initialize_for_test(&campaign_manager_account);
@@ -265,19 +275,15 @@ module marketplace::contribution_manager {
         let test_public_key = b"test_public_key_1";
         verifier::add_trusted_key(&contribution_manager, test_public_key);
         
-        // Prepare test data with invalid signature (expected to fail)
+        // Prepare test data with invalid signature (wrong size)
         let data_count = 1;
         let store_cid = string::utf8(b"test");
         let score = 100;
         let key_for_decryption = string::utf8(b"test_key_for_decryption");
-        let signature = b"test_signature";
+        let signature = x"0000000000000000000000000000000000000000000000000000000000000000"; // 32 bytes, should be 64
         
-        // This should fail because signature is not a valid ED25519 signature
+        // This should fail because signature size is wrong
         add_contribution(&test_account, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
-        
-        // Clean up
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 
     #[test]
@@ -294,7 +300,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = 65538, location = aptos_std::ed25519)]
+    #[expected_failure(abort_code = 65538)]  // Ed25519 E_WRONG_SIGNATURE_SIZE
     fun test_multiple_contributions() acquires ContributionStore {
         // Create test accounts
         let test_account1 = account::create_account_for_test(@0x1);
@@ -307,15 +313,19 @@ module marketplace::contribution_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize AptosCoin
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(&framework_signer);
+        // Initialize MAMU token
+        mamu::initialize_for_test(&campaign_manager_account);
 
-        // Register coin stores and add balance
-        coin::register<aptos_coin::AptosCoin>(&test_account1);
-        coin::register<aptos_coin::AptosCoin>(&test_account2);
-        coin::register<aptos_coin::AptosCoin>(&campaign_manager_account);
-        let coins = coin::mint<aptos_coin::AptosCoin>(1000_000_000_000, &mint_cap);
-        coin::deposit(signer::address_of(&campaign_manager_account), coins);
+        // Register accounts for MAMU
+        mamu::register(&test_account1);
+        mamu::register(&test_account2);
+        mamu::register(&campaign_manager_account);
+        mamu::register(&escrow_manager);
+
+        // Give test tokens to accounts
+        mamu::mint_to(&campaign_manager_account, signer::address_of(&test_account1), 1000_000_000_000);
+        mamu::mint_to(&campaign_manager_account, signer::address_of(&test_account2), 1000_000_000_000);
+        mamu::mint_to(&campaign_manager_account, signer::address_of(&campaign_manager_account), 1000_000_000_000);
         
         // Initialize modules in correct order
         marketplace::subscription_manager::initialize_for_test(&campaign_manager_account);
@@ -350,19 +360,14 @@ module marketplace::contribution_manager {
         let test_public_key = b"test_public_key_1";
         verifier::add_trusted_key(&contribution_manager, test_public_key);
         
-        // Prepare test data with invalid signature (expected to fail)
+        // Prepare test data with invalid signature (wrong size)
         let data_count = 1;
         let store_cid = string::utf8(b"test");
         let score = 100;
         let key_for_decryption = string::utf8(b"test_key_for_decryption");
-        let signature = b"test_signature";
+        let signature = x"0000000000000000000000000000000000000000000000000000000000000000"; // 32 bytes, should be 64
         
-        // These should fail because signature is not a valid ED25519 signature
+        // This should fail because signature size is wrong
         add_contribution(&test_account1, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
-        add_contribution(&test_account2, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
-        
-        // Clean up
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 }
