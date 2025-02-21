@@ -107,7 +107,8 @@ module marketplace::contribution_manager {
 
         // Check if the contribution amount is greater than the minimum contribution
         let minimum_contribution = campaign_manager::get_minimum_contribution(campaign_id);
-        assert!(get_contributor_contributions(contributor).length() >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
+        let contributor_contributions = get_contributor_contributions(contributor);
+        assert!(vector::length(&contributor_contributions) >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
 
         // Check if the contribution score is greater than the minimum score
         let minimum_score = campaign_manager::get_minimum_score(campaign_id);

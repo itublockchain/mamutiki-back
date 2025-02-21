@@ -11,7 +11,10 @@
     "create-campaign": "ts-node scripts/app.ts create-campaign",
     "list-campaigns": "ts-node scripts/app.ts list-campaigns",
     "add-contribution": "ts-node scripts/app.ts add-contribution ",
-    "list-contributions": "ts-node scripts/app.ts list-contributions ",
+    "list-contributions": "ts-node scripts/app.ts list-contributions",
+    "subscribe": "ts-node scripts/app.ts subscribe",
+    "update-price": "ts-node scripts/app.ts update-price",
+    "mint-token": "ts-node scripts/app.ts mint-token",
     "help": "ts-node scripts/app.ts help",
     "sign": "ts-node scripts/sign_test_data.ts",
     "node": "aptos node run-local-testnet --with-faucet",
@@ -20,10 +23,12 @@
   },
   "dependencies": {
     "@aptos-labs/aptos-client": "^1.0.0",
+    "@aptos-labs/ts-sdk": "^1.35.0",
     "@noble/hashes": "^1.7.1",
-    "aptos": "^1.21.0",
     "commander": "^13.1.0",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "install": "^0.13.0",
+    "npm": "^11.1.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.17",

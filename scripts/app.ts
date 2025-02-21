@@ -1,4 +1,4 @@
-import { Argument, Command } from "commander";
+import { Command } from "commander";
 
 import * as dotenv from "dotenv";
 dotenv.config();
@@ -33,6 +33,10 @@ mamutiki
   .command("list-contributions")
   .argument("<campaignId>")
   .action(async (campaignId) => await cli.listContributions(campaignId));
+
+mamutiki.command("subscribe").action(async () => await cli.subscribe());
+
+mamutiki.command("update-price").action(async () => await cli.updatePrice());
 
 mamutiki.command("help").action(async () => await cli.help());
 

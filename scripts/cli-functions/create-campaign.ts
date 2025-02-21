@@ -11,7 +11,9 @@ export default async function createCampaign() {
       prompt,
       unitPrice,
       minContribution,
+      minScore,
       rewardPool,
+      publicKeyForEncryption,
     } = DEFAULT_VALUES.campaign;
 
     // APT miktarlarını octa'ya çevirme (1 APT = 100_000_000 octa)
@@ -23,9 +25,9 @@ export default async function createCampaign() {
     console.log("Title:", title);
     console.log("Description:", description);
     console.log("Prompt:", prompt);
-    console.log("Unit Price:", unitPrice, "APT");
-    console.log("Minimum Contribution:", minContribution, "APT");
-    console.log("Reward Pool:", rewardPool, "APT");
+    console.log("Unit Price:", unitPrice, "Move");
+    console.log("Minimum Contribution:", minContribution, "Move");
+    console.log("Reward Pool:", rewardPool, "Move");
 
     const txn = await sdk.campaign.createCampaign(
       title,
@@ -33,7 +35,9 @@ export default async function createCampaign() {
       prompt,
       unitPriceOcta,
       minContribOcta,
-      rewardPoolOcta
+      minScore,
+      rewardPoolOcta,
+      publicKeyForEncryption
     );
     console.log("\nKampanya başarıyla oluşturuldu!");
     console.log("Transaction Hash:", txn);

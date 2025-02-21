@@ -9,6 +9,7 @@ interface Campaign {
   unit_price: number;
   minimum_contribution: number;
   active: boolean;
+  public_key_for_encryption: string;
 }
 
 interface Contribution {
@@ -17,6 +18,7 @@ interface Contribution {
   data_count: number;
   store_cid: string;
   score: number;
+  key_for_decryption: string;
   signature: string;
 }
 

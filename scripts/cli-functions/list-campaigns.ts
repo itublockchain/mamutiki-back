@@ -20,17 +20,17 @@ export default async function listCampaigns() {
       console.log("Title:", campaign.title);
       console.log("Description:", campaign.description);
       console.log("Prompt:", campaign.prompt);
-      console.log("Reward Pool:", campaign.reward_pool / 100_000_000, "APT");
+      console.log("Reward Pool:", campaign.reward_pool / 100_000_000, "Move");
       console.log(
         "Remaining Reward:",
         campaign.remaining_reward / 100_000_000,
-        "APT"
+        "Move"
       );
-      console.log("Unit Price:", campaign.unit_price / 100_000_000, "APT");
+      console.log("Unit Price:", campaign.unit_price / 100_000_000, "Move");
       console.log(
         "Minimum Contribution:",
         campaign.minimum_contribution / 100_000_000,
-        "APT"
+        "Move"
       );
       console.log("Active:", campaign.active);
       console.log("----------------------------------------");
