@@ -1,16 +1,15 @@
 module marketplace::subscription_manager {
     use std::signer;
-    use aptos_framework::coin;
-    use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::timestamp;
     use std::table::{Self, Table};
+    use marketplace::mamu;
 
     #[test_only]
     use aptos_framework::account;
 
     /// Structure that holds the subscription price
     struct SubscriptionPrice has key {
-        price: u64 // Price in Aptos coins
+        price: u64 // Price in MAMU tokens
     }
 
     /// Structure that holds subscriptions
@@ -24,7 +23,7 @@ module marketplace::subscription_manager {
     const EINVALID_PRICE: u64 = 3;
     const EACTIVE_SUBSCRIPTION_EXISTS: u64 = 4;
 
-    /// Initial price (10 APT = 1_000_000_000 octa)
+    /// Initial price (10 MAMU = 1_000_000_000 octa)
     const INITIAL_PRICE: u64 = 100_000_000;
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
@@ -63,7 +62,7 @@ module marketplace::subscription_manager {
         };
         
         // Process payment directly to marketplace address
-        coin::transfer<AptosCoin>(subscriber, @marketplace, price);
+        mamu::transfer(subscriber, @marketplace, price);
 
         // Set subscription duration
         let end_time = timestamp::now_seconds() + SUBSCRIPTION_DURATION;
@@ -96,9 +95,6 @@ module marketplace::subscription_manager {
     }
 
     #[test_only]
-    use aptos_framework::aptos_coin;
-
-    #[test_only]
     public fun initialize_for_test(creator: &signer) {
         init_module(creator);
     }
@@ -116,16 +112,18 @@ module marketplace::subscription_manager {
         // Initialize timestamp
         timestamp::set_time_has_started_for_testing(framework);
 
-        // Initialize AptosCoin for testing
-        let (burn_cap, mint_cap) = aptos_coin::initialize_for_test(framework);
+        // Initialize MAMU token
+        mamu::initialize_for_test(creator);
 
-        // Register coin store for creator and initialize module
-        coin::register<AptosCoin>(creator);
+        // Register accounts for MAMU
+        mamu::register(creator);
+        mamu::register(subscriber);
+
+        // Give test tokens to subscriber (100 MAMU)
+        mamu::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
+
+        // Initialize subscription module
         init_module(creator);
-
-        // Give test coins to subscriber (100 APT)
-        coin::register<AptosCoin>(subscriber);
-        coin::deposit(signer::address_of(subscriber), coin::mint(100_000_000_000, &mint_cap));
 
         // Subscribe
         subscribe(subscriber);
@@ -135,9 +133,5 @@ module marketplace::subscription_manager {
         assert!(is_subscribed, 1);
         assert!(remaining_time > 0, 2);
         assert!(remaining_time <= SUBSCRIPTION_DURATION, 3);
-
-        // Cleanup
-        coin::destroy_burn_cap(burn_cap);
-        coin::destroy_mint_cap(mint_cap);
     }
 } 
