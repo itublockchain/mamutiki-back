@@ -68,6 +68,7 @@ class CampaignManager extends BaseManager {
       unit_price: Number(response.unit_price),
       minimum_contribution: Number(response.minimum_contribution),
       active: response.active,
+      public_key_for_encryption: response.public_key_for_encryption,
     };
   }
 }

@@ -1,11 +1,9 @@
 import {
   Account,
-  Ed25519Account,
   Ed25519PrivateKey,
   SingleKeyAccount,
 } from "@aptos-labs/ts-sdk";
 
-import { sha256 } from "@noble/hashes/sha256";
 import { createHash } from "crypto";
 import dotenv from "dotenv";
 
@@ -31,29 +29,54 @@ export default class DataSigner {
   }
 
   signContributionData(
+    sender: string,
     campaignId: number,
     dataCount: number,
     storeCid: string,
-    score: number
+    score: number,
+    keyForDecryption: string
   ): string {
     // Manuel serileştirme
-    const storeKeyBuffer = Buffer.from(storeCid, "utf-8");
-    const message = Buffer.alloc(8 + 8 + 8 + storeKeyBuffer.length + 8);
+    const senderBuffer = Buffer.from(sender.replace("0x", ""), "hex");
+    const storeKeyBuffer = Buffer.from(storeCid);
+    const keyForDecryptionBuffer = Buffer.from(keyForDecryption);
+    const message = Buffer.alloc(
+      32 +
+        8 +
+        8 +
+        8 +
+        storeKeyBuffer.length +
+        8 +
+        8 +
+        keyForDecryptionBuffer.length
+    );
+
+    // sender (32 bytes)
+    senderBuffer.copy(message, 0);
 
     // campaign_id (u64)
-    message.writeBigUInt64LE(BigInt(campaignId), 0);
+    message.writeBigUInt64LE(BigInt(campaignId), 32);
 
     // data_count (u64)
-    message.writeBigUInt64LE(BigInt(dataCount), 8);
+    message.writeBigUInt64LE(BigInt(dataCount), 40);
 
     // store_key_len (u64)
-    message.writeBigUInt64LE(BigInt(storeKeyBuffer.length), 16);
+    message.writeBigUInt64LE(BigInt(storeKeyBuffer.length), 48);
 
     // store_key (bytes)
-    storeKeyBuffer.copy(message, 24);
+    storeKeyBuffer.copy(message, 56);
 
     // score (u64)
-    message.writeBigUInt64LE(BigInt(score), 24 + storeKeyBuffer.length);
+    message.writeBigUInt64LE(BigInt(score), 56 + storeKeyBuffer.length);
+
+    // key_for_decryption_len (u64)
+    message.writeBigUInt64LE(
+      BigInt(keyForDecryptionBuffer.length),
+      64 + storeKeyBuffer.length
+    );
+
+    // key_for_decryption (bytes)
+    keyForDecryptionBuffer.copy(message, 72 + storeKeyBuffer.length);
 
     // Mesajı hash'le (SHA2-256) ve imzala
     const messageHash = createHash("sha256").update(message).digest();
@@ -68,7 +91,14 @@ export default class DataSigner {
 // Test amaçlı direkt çalıştırma
 if (require.main === module) {
   const signer = new DataSigner();
-  const signature = signer.signContributionData(1, 1, "test_store_key", 100);
+  const signature = signer.signContributionData(
+    "0x0c869abd70b0f3e68705acfa8f88be344b2c93e8dc93d47ae99e6fcc2055cfb7",
+    1,
+    1,
+    "test_store_key",
+    100,
+    "test_key_for_decryption"
+  );
   console.log("Test imzası:", signature);
   console.log("Trusted Public Key:", signer.getTrustedPublicKey());
 }

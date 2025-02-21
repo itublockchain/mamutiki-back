@@ -17,7 +17,7 @@ export async function initSDK() {
     const balance = await sdk.account.getBalance();
     console.log("Bakiye:", balance.formatted, "MOVE\n");
 
-    return sdk;
+    return { ...sdk, _account: account };
   } catch (error) {
     console.error("SDK başlatılırken bir hata oluştu:", error);
     throw error;

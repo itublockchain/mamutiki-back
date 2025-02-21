@@ -12,6 +12,8 @@
     "list-campaigns": "ts-node scripts/app.ts list-campaigns",
     "add-contribution": "ts-node scripts/app.ts add-contribution ",
     "list-contributions": "ts-node scripts/app.ts list-contributions",
+    "subscribe": "ts-node scripts/app.ts subscribe",
+    "update-price": "ts-node scripts/app.ts update-price",
     "mint-token": "ts-node scripts/app.ts mint-token",
     "help": "ts-node scripts/app.ts help",
     "sign": "ts-node scripts/sign_test_data.ts",

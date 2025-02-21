@@ -62,6 +62,19 @@ class AccountManager extends BaseManager {
 
     return txn;
   }
+
+  async register(): Promise<string> {
+    if (!this.account) throw new Error("Account not set");
+
+    const txn = await this.executeTransaction({
+      type: "entry_function_payload",
+      function: `${this.moduleAddress}::mamu::register`,
+      type_arguments: [],
+      arguments: [this.account.accountAddress],
+    });
+
+    return txn;
+  }
 }
 
 export default AccountManager;
