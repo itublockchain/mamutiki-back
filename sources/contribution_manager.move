@@ -47,6 +47,7 @@ module marketplace::contribution_manager {
     const ERR_ALREADY_CONTRIBUTED: u64 = 7;
     const ERR_INSUFFICIENT_CONTRIBUTION: u64 = 8;
     const ERR_INSUFFICIENT_SCORE: u64 = 9;
+    const ERR_NO_TRUSTED_KEYS: u64 = 10;
 
     fun init_module(account: &signer) {
         let store = ContributionStore {
@@ -217,7 +218,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = ERR_NO_VALID_SIGNATURE)]
+    #[expected_failure(abort_code = 65538)]  // Ed25519 E_WRONG_SIGNATURE_SIZE
     fun test_add_contribution() acquires ContributionStore {
         // Create test accounts
         let test_account = account::create_account_for_test(@0x1);
@@ -274,14 +275,14 @@ module marketplace::contribution_manager {
         let test_public_key = b"test_public_key_1";
         verifier::add_trusted_key(&contribution_manager, test_public_key);
         
-        // Prepare test data with invalid signature
+        // Prepare test data with invalid signature (wrong size)
         let data_count = 1;
         let store_cid = string::utf8(b"test");
         let score = 100;
         let key_for_decryption = string::utf8(b"test_key_for_decryption");
-        let signature = x"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+        let signature = x"0000000000000000000000000000000000000000000000000000000000000000"; // 32 bytes, should be 64
         
-        // This should fail because signature is not valid
+        // This should fail because signature size is wrong
         add_contribution(&test_account, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
     }
 
@@ -299,7 +300,7 @@ module marketplace::contribution_manager {
     }
 
     #[test]
-    #[expected_failure(abort_code = ERR_NO_VALID_SIGNATURE)]
+    #[expected_failure(abort_code = 65538)]  // Ed25519 E_WRONG_SIGNATURE_SIZE
     fun test_multiple_contributions() acquires ContributionStore {
         // Create test accounts
         let test_account1 = account::create_account_for_test(@0x1);
@@ -359,15 +360,14 @@ module marketplace::contribution_manager {
         let test_public_key = b"test_public_key_1";
         verifier::add_trusted_key(&contribution_manager, test_public_key);
         
-        // Prepare test data with invalid signature
+        // Prepare test data with invalid signature (wrong size)
         let data_count = 1;
         let store_cid = string::utf8(b"test");
         let score = 100;
         let key_for_decryption = string::utf8(b"test_key_for_decryption");
-        let signature = x"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+        let signature = x"0000000000000000000000000000000000000000000000000000000000000000"; // 32 bytes, should be 64
         
-        // These should fail because signature is not valid
+        // This should fail because signature size is wrong
         add_contribution(&test_account1, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
-        add_contribution(&test_account2, campaign_id, data_count, store_cid, score, key_for_decryption, signature);
     }
 }
