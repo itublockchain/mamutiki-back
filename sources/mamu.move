@@ -69,7 +69,7 @@ module marketplace::mamu {
     /// =================== Management Functions ===================
 
     /// Register an account to hold MAMU
-    public fun register(account: &signer) {
+    public entry fun register(account: &signer) {
         coin::register<MAMU>(account);
     }
 

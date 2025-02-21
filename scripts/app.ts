@@ -34,6 +34,11 @@ mamutiki
   .argument("<campaignId>")
   .action(async (campaignId) => await cli.listContributions(campaignId));
 
+mamutiki
+  .command("mint-token")
+  .argument("<amount>")
+  .action(async (amount) => await cli.mintToken(amount));
+
 mamutiki.command("subscribe").action(async () => await cli.subscribe());
 
 mamutiki.command("update-price").action(async () => await cli.updatePrice());

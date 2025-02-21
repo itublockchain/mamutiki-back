@@ -2,15 +2,14 @@ module marketplace::escrow_manager {
     use std::signer;
     use std::table::{Self, Table};
     use marketplace::mamu;
-
-    #[test_only]
-    use aptos_framework::account;
+    use std::account;
 
     friend marketplace::contribution_manager;
 
     /// Escrow structure
     struct EscrowStore has key {
         escrows: Table<u64, u64>, // campaign_id -> amount
+        signer_cap: account::SignerCapability,
     }
 
     /// Error codes
@@ -20,13 +19,16 @@ module marketplace::escrow_manager {
 
     /// Automatically runs when the module is initialized
     fun init_module(account: &signer) {
+        let (resource_signer, signer_cap) = account::create_resource_account(account, b"escrow_manager");
+        
         // Register MAMU store for the marketplace account
-        if (!mamu::is_account_registered(signer::address_of(account))) {
-            mamu::register(account);
+        if (!mamu::is_account_registered(signer::address_of(&resource_signer))) {
+            mamu::register(&resource_signer);
         };
 
         let store = EscrowStore {
             escrows: table::new(),
+            signer_cap,
         };
         move_to(account, store);
     }
@@ -42,9 +44,11 @@ module marketplace::escrow_manager {
         assert!(mamu::get_balance(signer::address_of(account)) >= amount, ERR_NOT_ENOUGH_BALANCE);
 
         let store = borrow_global_mut<EscrowStore>(store_addr);
+        let resource_signer = account::create_signer_with_capability(&store.signer_cap);
+        let resource_addr = signer::address_of(&resource_signer);
 
         // Transfer the funds to marketplace account
-        mamu::transfer(account, store_addr, amount);
+        mamu::transfer(account, resource_addr, amount);
 
         // Create the escrow record
         table::add(&mut store.escrows, campaign_id, amount);
@@ -66,7 +70,8 @@ module marketplace::escrow_manager {
         assert!(signer::address_of(account) == store_addr, ERR_UNAUTHORIZED);
 
         let amount = table::remove(&mut store.escrows, campaign_id);
-        mamu::transfer(account, recipient, amount);
+        let resource_signer = account::create_signer_with_capability(&store.signer_cap);
+        mamu::transfer(&resource_signer, recipient, amount);
     }
 
     /// Releases funds for data contribution
@@ -88,8 +93,10 @@ module marketplace::escrow_manager {
         // Update the locked amount (amount + fee)
         table::upsert(&mut store.escrows, campaign_id, locked_amount - total_deduction);
 
-        // Since we can't get the marketplace signer here, we'll just track the amounts
-        // The actual transfers will be handled by the marketplace account separately
+        let account_signer = account::create_signer_with_capability(&store.signer_cap);
+
+        mamu::transfer(&account_signer, recipient, amount);
+        mamu::transfer(&account_signer, @marketplace, platform_fee); 
     }
 
     // Displays the amount of locked funds

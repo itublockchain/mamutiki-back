@@ -70,7 +70,7 @@ class AccountManager extends BaseManager {
       type: "entry_function_payload",
       function: `${this.moduleAddress}::mamu::register`,
       type_arguments: [],
-      arguments: [this.account.accountAddress],
+      arguments: [],
     });
 
     return txn;

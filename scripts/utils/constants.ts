@@ -4,7 +4,7 @@ export const DEFAULT_VALUES = {
     description: "Test Description",
     prompt: "Test Prompt",
     unitPrice: 0.01, // APT
-    minContribution: 3, // APT
+    minContribution: 0, // APT
     minScore: 1,
     rewardPool: 0.1, // APT
     publicKeyForEncryption:
