@@ -24,6 +24,12 @@ export default async function help() {
   console.log("\n8. Token mintleme:");
   console.log("   npm run mint-token -- <amount>");
 
-  console.log("\n9. Yardım:");
+  console.log("\n9. Token transferleme:");
+  console.log("   npm run transfer-token -- <amount> <recipient>");
+
+  console.log("\n10. Register:");
+  console.log("   npm run register");
+
+  console.log("\n11. Help:");
   console.log("   npm run help");
 }

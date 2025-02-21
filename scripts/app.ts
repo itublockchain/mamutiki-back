@@ -39,6 +39,16 @@ mamutiki
   .argument("<amount>")
   .action(async (amount) => await cli.mintToken(amount));
 
+mamutiki
+  .command("transfer-token")
+  .argument("<amount>")
+  .argument("<recipient>")
+  .action(
+    async (amount, recipient) => await cli.transferToken(amount, recipient)
+  );
+
+mamutiki.command("register").action(async () => await cli.register());
+
 mamutiki.command("subscribe").action(async () => await cli.subscribe());
 
 mamutiki.command("update-price").action(async () => await cli.updatePrice());

@@ -75,6 +75,39 @@ class AccountManager extends BaseManager {
 
     return txn;
   }
+
+  async transferToken(amount: number, recipient: string): Promise<string> {
+    try {
+      if (!this.account) throw new Error("Account not set");
+
+      const txn = await this.executeTransaction({
+        type: "entry_function_payload",
+        function: `${this.moduleAddress}::mamu::transfer`,
+        type_arguments: [],
+        arguments: [recipient, amount * ONE_MAMU],
+      });
+
+      return txn;
+    } catch (error) {
+      console.error(
+        "AccountManager - Token transferlenirken bir hata oluştu:",
+        error
+      );
+      throw error;
+    }
+  }
+
+  async isRegistered(address: string): Promise<boolean> {
+    const resources = await this.aptos.getAccountResources({
+      accountAddress: address,
+    });
+
+    const mamuStore = resources.find(
+      (r: any) => r.type === "0x1::coin::CoinStore<0x1::mamu::MAMU>"
+    );
+
+    return mamuStore !== undefined;
+  }
 }
 
 export default AccountManager;

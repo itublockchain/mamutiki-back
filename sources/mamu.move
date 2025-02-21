@@ -1,7 +1,8 @@
 module marketplace::mamu {
     use std::string;
     use std::signer;
-    use aptos_framework::coin::{Self, BurnCapability, FreezeCapability, MintCapability};
+    use std::vector;
+    use aptos_framework::coin::{Self, BurnCapability, FreezeCapability, MintCapability, CoinStore};
     use aptos_framework::account;
 
     /// =================== Constants ===================
@@ -16,6 +17,7 @@ module marketplace::mamu {
     const EINSUFFICIENT_BALANCE: u64 = 2;
     const EZERO_MINT_AMOUNT: u64 = 4;
     const EZERO_BURN_AMOUNT: u64 = 5;
+    const ENOT_REGISTERED: u64 = 6;
 
     /// =================== Resources & Structs ===================
 
@@ -60,6 +62,22 @@ module marketplace::mamu {
         }
     }
 
+    /// Get balances for multiple accounts
+    #[view]
+    public fun get_balances(accounts: vector<address>): vector<u64> {
+        let balances = vector::empty<u64>();
+        let i = 0;
+        let len = vector::length(&accounts);
+        
+        while (i < len) {
+            let account = *vector::borrow(&accounts, i);
+            vector::push_back(&mut balances, get_balance(account));
+            i = i + 1;
+        };
+        
+        balances
+    }
+
     /// Check if account is registered
     #[view]
     public fun is_account_registered(account: address): bool {
@@ -76,6 +94,8 @@ module marketplace::mamu {
     /// Mint new MAMU tokens to an account
     public entry fun mint_to(_admin: &signer, recipient: address, amount: u64) acquires MovementCapabilities {
         assert!(amount > 0, EZERO_MINT_AMOUNT);
+        assert!(coin::is_account_registered<MAMU>(recipient), ENOT_REGISTERED);
+
         let caps = borrow_global<MovementCapabilities>(@marketplace);
         let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
         coin::deposit(recipient, coins);
@@ -84,7 +104,13 @@ module marketplace::mamu {
     /// =================== User Functions ===================
 
     /// Transfer MAMU between accounts
-    public entry fun transfer(from: &signer, to: address, amount: u64) {
+    public entry fun transfer(
+        from: &signer,
+        to: address,
+        amount: u64,
+    ) {
+        assert!(amount > 0, EZERO_MINT_AMOUNT);
+        assert!(coin::is_account_registered<MAMU>(to), ENOT_REGISTERED);
         coin::transfer<MAMU>(from, to, amount);
     }
 
