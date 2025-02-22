@@ -2,7 +2,7 @@ module marketplace::campaign_manager {
     use std::signer;
     use std::table;
     use std::vector;
-    use std::string::String;
+    use std::string::{Self, String, length};
     use std::event;
     use std::timestamp;
     use aptos_framework::account;
@@ -53,6 +53,14 @@ module marketplace::campaign_manager {
     const ERR_NO_SUBSCRIPTION: u64 = 1001;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
+    const ERR_INVALID_TITLE: u64 = 2;
+    const ERR_INVALID_DESCRIPTION: u64 = 3;
+    const ERR_INVALID_PROMPT: u64 = 4;
+    const ERR_INVALID_UNIT_PRICE: u64 = 5;
+    const ERR_INVALID_MINIMUM_CONTRIBUTION: u64 = 6;
+    const ERR_INVALID_MINIMUM_SCORE: u64 = 7;
+    const ERR_INVALID_REWARD_POOL: u64 = 8;
+    const ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION: u64 = 9;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
@@ -62,6 +70,26 @@ module marketplace::campaign_manager {
             create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
+    }
+
+    public fun create_campaign_check_input_validity(
+        title: String,
+        description: String,
+        prompt: String,
+        unit_price: u64,
+        minimum_contribution: u64,
+        minimum_score: u64,
+        reward_pool: u64,
+        public_key_for_encryption: vector<u8>
+    ) {
+        assert!(length(&title) > 0, ERR_INVALID_TITLE);
+        assert!(length(&description) > 0, ERR_INVALID_DESCRIPTION);
+        assert!(length(&prompt) > 0, ERR_INVALID_PROMPT);
+        assert!(unit_price > 0, ERR_INVALID_UNIT_PRICE);
+        assert!(minimum_contribution >= 0, ERR_INVALID_MINIMUM_CONTRIBUTION);
+        assert!(minimum_score >= 0, ERR_INVALID_MINIMUM_SCORE);
+        assert!(reward_pool > 0, ERR_INVALID_REWARD_POOL);
+        assert!(vector::length(&public_key_for_encryption) > 0, ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION);
     }
 
     // Creates a new campaign and adds it to the store.
@@ -83,6 +111,8 @@ module marketplace::campaign_manager {
         if (!has_subscription) {
             assert!(minimum_contribution == 0, ERR_NO_SUBSCRIPTION);
         };
+
+        create_campaign_check_input_validity(title, description, prompt, unit_price, minimum_contribution, minimum_score, reward_pool, public_key_for_encryption);
 
         // Get store from module address
         let module_addr = @marketplace;

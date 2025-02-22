@@ -50,14 +50,14 @@ class AccountManager extends BaseManager {
     await this.getBalance();
   }
 
-  async mintToken(amount: number): Promise<string> {
+  async mint(amount: number): Promise<string> {
     if (!this.account) throw new Error("Account not set");
 
     const txn = await this.executeTransaction({
       type: "entry_function_payload",
-      function: `${this.moduleAddress}::mamu::mint_to`,
+      function: `${this.moduleAddress}::mamu::mint`,
       type_arguments: [],
-      arguments: [this.account.accountAddress, amount * ONE_MAMU],
+      arguments: [amount * ONE_MAMU],
     });
 
     return txn;

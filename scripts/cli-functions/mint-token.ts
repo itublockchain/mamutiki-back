@@ -4,7 +4,7 @@ export default async function mintToken(amount: number) {
   try {
     const sdk = await initSDK();
 
-    const txn_mint = await sdk.account.mintToken(amount);
+    const txn_mint = await sdk.account.mint(amount);
     console.log("Token mintleniyor...");
     console.log("Transaction Hash Mint:", txn_mint);
   } catch (error) {

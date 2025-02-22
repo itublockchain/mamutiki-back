@@ -10,7 +10,7 @@
     "add-trusted-key": "ts-node scripts/app.ts add-trusted-key",
     "create-campaign": "ts-node scripts/app.ts create-campaign",
     "list-campaigns": "ts-node scripts/app.ts list-campaigns",
-    "add-contribution": "ts-node scripts/app.ts add-contribution ",
+    "add-contribution": "ts-node scripts/app.ts add-contribution",
     "list-contributions": "ts-node scripts/app.ts list-contributions",
     "subscribe": "ts-node scripts/app.ts subscribe",
     "update-price": "ts-node scripts/app.ts update-price",

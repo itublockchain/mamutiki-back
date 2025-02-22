@@ -2,7 +2,7 @@ module marketplace::contribution_manager {
     use std::signer;
     use std::vector;
     use std::table::{Self, Table};
-    use std::string::{String};
+    use std::string::{Self, String, length};
     use std::event;
     use aptos_framework::timestamp;
     use aptos_framework::account;
@@ -55,6 +55,12 @@ module marketplace::contribution_manager {
     const ERR_INSUFFICIENT_CONTRIBUTION: u64 = 8;
     const ERR_INSUFFICIENT_SCORE: u64 = 9;
 
+    const ERR_INVALID_CAMPAIGN_ID: u64 = 10;
+    const ERR_INVALID_STORE_CID: u64 = 11;
+    const ERR_INVALID_SCORE: u64 = 12;
+    const ERR_INVALID_KEY_FOR_DECRYPTION: u64 = 13;
+    const ERR_INVALID_SIGNATURE: u64 = 14;
+
     fun init_module(account: &signer) {
         let store = ContributionStore {
             contributions: table::new(),
@@ -85,6 +91,22 @@ module marketplace::contribution_manager {
         false
     }
 
+    public fun add_contributibon_check_input_validity(
+        campaign_id: u64,
+        data_count: u64,
+        store_cid: String,
+        score: u64,
+        key_for_decryption: String,
+        signature: vector<u8>)
+        {
+        assert!(campaign_id > 0, ERR_INVALID_CAMPAIGN_ID);
+        assert!(data_count > 0, ERR_INVALID_DATA_COUNT);
+        assert!(length(&store_cid) > 0, ERR_INVALID_STORE_CID);
+        assert!(score >= 0, ERR_INVALID_SCORE);
+        assert!(length(&key_for_decryption) > 0, ERR_INVALID_KEY_FOR_DECRYPTION);
+        assert!(vector::length(&signature) > 0, ERR_INVALID_SIGNATURE);
+    }
+
     // Add a new contribution
     public entry fun add_contribution(
         account: &signer,
@@ -98,6 +120,13 @@ module marketplace::contribution_manager {
         mamu::check_register(account);
         
         let contributor = signer::address_of(account);
+
+        add_contributibon_check_input_validity(campaign_id,
+        data_count,
+        store_cid,
+        score,
+        key_for_decryption,
+        signature);
 
         // Verify the signature
         assert!(
