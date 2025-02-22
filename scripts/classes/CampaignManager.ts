@@ -10,7 +10,9 @@ class CampaignManager extends BaseManager {
     prompt: string,
     unitPrice: number,
     minimumContribution: number,
-    rewardPool: number
+    minimumScore: number,
+    rewardPool: number,
+    publicKeyForEncryption: string
   ): Promise<string> {
     const payload = AptosUtils.createEntryPayload(
       `${this.moduleAddress}::campaign_manager::create_campaign`,
@@ -20,7 +22,9 @@ class CampaignManager extends BaseManager {
         prompt,
         unitPrice.toString(),
         minimumContribution.toString(),
+        minimumScore.toString(),
         rewardPool.toString(),
+        AptosUtils.hexToBytes(publicKeyForEncryption),
       ]
     );
 
@@ -64,6 +68,7 @@ class CampaignManager extends BaseManager {
       unit_price: Number(response.unit_price),
       minimum_contribution: Number(response.minimum_contribution),
       active: response.active,
+      public_key_for_encryption: response.public_key_for_encryption,
     };
   }
 }

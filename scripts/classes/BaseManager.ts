@@ -1,38 +1,57 @@
-import { AptosClient, AptosAccount, Types } from "aptos";
+import {
+  Aptos,
+  Ed25519Account,
+  AptosConfig,
+  EntryFunctionPayloadResponse,
+  InputViewFunctionData,
+  Network,
+} from "@aptos-labs/ts-sdk";
 import CONFIG from "../utils/config";
 
 // Base Manager Class
 class BaseManager {
-  protected client: AptosClient;
-  protected account?: AptosAccount;
+  config: AptosConfig = new AptosConfig({
+    network: Network.CUSTOM,
+    fullnode: CONFIG.NODE_URL,
+    faucet: CONFIG.FAUCET_URL,
+  });
+
+  aptos: Aptos = new Aptos(this.config);
+  protected account?: Ed25519Account;
   protected moduleAddress: string;
 
-  constructor(
-    nodeUrl: string = CONFIG.NODE_URL,
-    moduleAddress: string = CONFIG.MODULE_ADDRESS
-  ) {
-    this.client = new AptosClient(nodeUrl);
+  constructor(moduleAddress: string = CONFIG.MODULE_ADDRESS) {
     this.moduleAddress = moduleAddress;
   }
 
-  setAccount(account: AptosAccount) {
+  setAccount(account: Ed25519Account) {
     this.account = account;
   }
 
   protected async executeTransaction(
-    payload: Types.EntryFunctionPayload
+    payload: EntryFunctionPayloadResponse
   ): Promise<string> {
     if (!this.account) throw new Error("Account not set");
 
     try {
-      const txn = await this.client.generateTransaction(
-        this.account.address(),
-        payload
-      );
-      const signedTxn = await this.client.signTransaction(this.account, txn);
-      const result = await this.client.submitTransaction(signedTxn);
-      await this.client.waitForTransaction(result.hash);
-      return result.hash;
+      const transaction = await this.aptos.transaction.build.simple({
+        sender: this.account.accountAddress,
+        data: {
+          function: payload.function,
+          functionArguments: payload.arguments,
+        },
+      });
+
+      const pendingTransaction = await this.aptos.signAndSubmitTransaction({
+        signer: this.account,
+        transaction,
+      });
+
+      const tx = await this.aptos.waitForTransaction({
+        transactionHash: pendingTransaction.hash,
+      });
+
+      return tx.hash;
     } catch (error) {
       console.error("Transaction error:", error);
       throw error;
@@ -41,12 +60,14 @@ class BaseManager {
 
   protected async viewFunction(func: string, args: any[] = []): Promise<any> {
     try {
-      const payload: Types.ViewRequest = {
+      const payload = {
         function: `${this.moduleAddress}::${func}`,
-        type_arguments: [],
-        arguments: args,
+        functionArguments: args,
       };
-      return await this.client.view(payload);
+
+      return await this.aptos.view({
+        payload: payload as InputViewFunctionData,
+      });
     } catch (error) {
       console.error(`View function error (${func}):`, error);
       throw error;

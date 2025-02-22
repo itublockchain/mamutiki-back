@@ -1,37 +1,35 @@
 import BaseManager from "./BaseManager";
-import { FaucetClient, AptosAccount, HexString } from "aptos";
+import { Account, Ed25519PrivateKey, Ed25519Account } from "@aptos-labs/ts-sdk";
 import CONFIG from "../utils/config";
 import { AccountBalance } from "../types";
 import AptosUtils from "../utils/AptosUtils";
+import { ONE_MAMU } from "../utils/constants";
 
 // Account Manager
 class AccountManager extends BaseManager {
-  private faucetClient: FaucetClient;
-
-  constructor(
-    nodeUrl: string = CONFIG.NODE_URL,
-    faucetUrl: string = CONFIG.FAUCET_URL,
-    moduleAddress: string = CONFIG.MODULE_ADDRESS
-  ) {
-    super(nodeUrl, moduleAddress);
-    this.faucetClient = new FaucetClient(nodeUrl, faucetUrl);
+  constructor(moduleAddress: string = CONFIG.MODULE_ADDRESS) {
+    super(moduleAddress);
+    this.createAccount(process.env.TRUSTED_PRIVATE_KEY);
   }
 
-  createAccount(privateKeyHex?: string): AptosAccount {
-    this.account = privateKeyHex
-      ? new AptosAccount(HexString.ensure(privateKeyHex).toUint8Array())
-      : new AptosAccount();
+  createAccount(privateKeyHex?: string): Ed25519Account {
+    const privateKey = new Ed25519PrivateKey(privateKeyHex || "");
+
+    if (privateKeyHex) {
+      this.account = Account.fromPrivateKey({ privateKey: privateKey });
+    } else this.account = Account.generate();
+
     return this.account;
   }
 
   async getBalance(): Promise<AccountBalance> {
     if (!this.account) throw new Error("Account not set");
 
-    const resources = await this.client.getAccountResources(
-      this.account.address()
-    );
+    const resources = await this.aptos.getAccountResources({
+      accountAddress: this.account.accountAddress,
+    });
     const aptosCoin = resources.find(
-      (r) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
+      (r: any) => r.type === "0x1::coin::CoinStore<0x1::aptos_coin::AptosCoin>"
     );
 
     if (!aptosCoin?.data || !("coin" in aptosCoin.data)) {
@@ -48,8 +46,67 @@ class AccountManager extends BaseManager {
 
   async fundAccount(amount: number = 100_000_000): Promise<void> {
     if (!this.account) throw new Error("Account not set");
-    await this.faucetClient.fundAccount(this.account.address(), amount);
+    //await this.faucetClient.fundAccount(this.account.address(), amount);
     await this.getBalance();
+  }
+
+  async mintToken(amount: number): Promise<string> {
+    if (!this.account) throw new Error("Account not set");
+
+    const txn = await this.executeTransaction({
+      type: "entry_function_payload",
+      function: `${this.moduleAddress}::mamu::mint_to`,
+      type_arguments: [],
+      arguments: [this.account.accountAddress, amount * ONE_MAMU],
+    });
+
+    return txn;
+  }
+
+  async register(): Promise<string> {
+    if (!this.account) throw new Error("Account not set");
+
+    const txn = await this.executeTransaction({
+      type: "entry_function_payload",
+      function: `${this.moduleAddress}::mamu::register`,
+      type_arguments: [],
+      arguments: [],
+    });
+
+    return txn;
+  }
+
+  async transferToken(amount: number, recipient: string): Promise<string> {
+    try {
+      if (!this.account) throw new Error("Account not set");
+
+      const txn = await this.executeTransaction({
+        type: "entry_function_payload",
+        function: `${this.moduleAddress}::mamu::transfer`,
+        type_arguments: [],
+        arguments: [recipient, amount * ONE_MAMU],
+      });
+
+      return txn;
+    } catch (error) {
+      console.error(
+        "AccountManager - Token transferlenirken bir hata oluştu:",
+        error
+      );
+      throw error;
+    }
+  }
+
+  async isRegistered(address: string): Promise<boolean> {
+    const resources = await this.aptos.getAccountResources({
+      accountAddress: address,
+    });
+
+    const mamuStore = resources.find(
+      (r: any) => r.type === "0x1::coin::CoinStore<0x1::mamu::MAMU>"
+    );
+
+    return mamuStore !== undefined;
   }
 }
 

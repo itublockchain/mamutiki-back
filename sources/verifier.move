@@ -88,13 +88,13 @@ module marketplace::verifier {
         vector::append(&mut message, bcs::to_bytes(&data_count));
         
         let store_cid_bytes = string::bytes(&store_cid);
-        vector::append(&mut message, bcs::to_bytes(&(store_cid_bytes.length() as u64)));
+        vector::append(&mut message, bcs::to_bytes(&(vector::length(store_cid_bytes) as u64)));
         vector::append(&mut message, *store_cid_bytes);
         
         vector::append(&mut message, bcs::to_bytes(&score));
 
         let key_for_decryption_bytes = string::bytes(&key_for_decryption);
-        vector::append(&mut message, bcs::to_bytes(&(key_for_decryption_bytes.length() as u64)));
+        vector::append(&mut message, bcs::to_bytes(&(vector::length(key_for_decryption_bytes) as u64)));
         vector::append(&mut message, *key_for_decryption_bytes);
         
         let message_hash = hash::sha2_256(message);

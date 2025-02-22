@@ -7,6 +7,8 @@ module marketplace::contribution_manager {
     use aptos_framework::timestamp;
     use aptos_framework::account;
 
+    use marketplace::mamu;
+
     use marketplace::campaign_manager;
     use marketplace::escrow_manager;
     use marketplace::verifier;
@@ -92,7 +94,8 @@ module marketplace::contribution_manager {
         score: u64,
         key_for_decryption: String,
         signature: vector<u8>,
-    ) acquires ContributionStore {
+        ) acquires ContributionStore {
+        mamu::check_register(account);
         
         let contributor = signer::address_of(account);
 
@@ -107,7 +110,8 @@ module marketplace::contribution_manager {
 
         // Check if the contribution amount is greater than the minimum contribution
         let minimum_contribution = campaign_manager::get_minimum_contribution(campaign_id);
-        assert!(get_contributor_contributions(contributor).length() >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
+        let contributor_contributions = get_contributor_contributions(contributor);
+        assert!(vector::length(&contributor_contributions) >= minimum_contribution, ERR_INSUFFICIENT_CONTRIBUTION);
 
         // Check if the contribution score is greater than the minimum score
         let minimum_score = campaign_manager::get_minimum_score(campaign_id);
