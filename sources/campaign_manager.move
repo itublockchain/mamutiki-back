@@ -61,6 +61,9 @@ module marketplace::campaign_manager {
     const ERR_INVALID_MINIMUM_SCORE: u64 = 7;
     const ERR_INVALID_REWARD_POOL: u64 = 8;
     const ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION: u64 = 9;
+    const ERR_EXCEED_MAX_SCORE: u64 = 10;
+
+    const MAX_SCORE: u64 = 100;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
@@ -88,6 +91,7 @@ module marketplace::campaign_manager {
         assert!(unit_price > 0, ERR_INVALID_UNIT_PRICE);
         assert!(minimum_contribution >= 0, ERR_INVALID_MINIMUM_CONTRIBUTION);
         assert!(minimum_score >= 0, ERR_INVALID_MINIMUM_SCORE);
+        assert!(minimum_score <= MAX_SCORE, ERR_EXCEED_MAX_SCORE);
         assert!(reward_pool > 0, ERR_INVALID_REWARD_POOL);
         assert!(vector::length(&public_key_for_encryption) > 0, ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION);
     }
