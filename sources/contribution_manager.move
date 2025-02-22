@@ -7,6 +7,8 @@ module marketplace::contribution_manager {
     use aptos_framework::timestamp;
     use aptos_framework::account;
 
+    use marketplace::mamu;
+
     use marketplace::campaign_manager;
     use marketplace::escrow_manager;
     use marketplace::verifier;
@@ -92,7 +94,8 @@ module marketplace::contribution_manager {
         score: u64,
         key_for_decryption: String,
         signature: vector<u8>,
-    ) acquires ContributionStore {
+        ) acquires ContributionStore {
+        mamu::check_register(account);
         
         let contributor = signer::address_of(account);
 

@@ -91,6 +91,18 @@ module marketplace::mamu {
         coin::register<MAMU>(account);
     }
 
+    public entry fun check_register(account: &signer) {
+        assert!(safe_register(account), ENOT_REGISTERED);
+    }
+
+    public fun safe_register(account: &signer): bool {
+        if (!is_account_registered(signer::address_of(account))) {
+            register(account);
+        };
+
+        is_account_registered(signer::address_of(account))
+    }
+
     /// Mint new MAMU tokens to an account
     public entry fun mint_to(_admin: &signer, recipient: address, amount: u64) acquires MovementCapabilities {
         assert!(amount > 0, EZERO_MINT_AMOUNT);
@@ -99,6 +111,15 @@ module marketplace::mamu {
         let caps = borrow_global<MovementCapabilities>(@marketplace);
         let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
         coin::deposit(recipient, coins);
+    }
+    
+    public entry fun mint(recipient: &signer, amount: u64) acquires MovementCapabilities {
+        assert!(amount > 0, EZERO_MINT_AMOUNT);
+        check_register(recipient);
+
+        let caps = borrow_global<MovementCapabilities>(@marketplace);
+        let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
+        coin::deposit(signer::address_of(recipient), coins);
     }
 
     /// =================== User Functions ===================

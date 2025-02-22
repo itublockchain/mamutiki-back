@@ -76,6 +76,7 @@ module marketplace::campaign_manager {
         reward_pool: u64,
         public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
+        mamu::check_register(account);
         let (has_subscription, _) = subscription_manager::check_subscription(signer::address_of(account));
         
         // If there is no subscription, minimum_contribution must be 0
