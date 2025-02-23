@@ -51,6 +51,7 @@ module marketplace::campaign_manager {
     }
 
     const ERR_NO_SUBSCRIPTION: u64 = 1001;
+    const ERR_NO_CAMPAIGN: u64 = 1002;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
     const ERR_INVALID_TITLE: u64 = 2;
@@ -157,6 +158,47 @@ module marketplace::campaign_manager {
         });
     }
 
+    #[view]
+    public fun last_created_campaign(creator: address): Campaign acquires CampaignStore {
+        // Get all campaigns by the creator and sort them by timestamp then get the last one
+        let store = borrow_global<CampaignStore>(@marketplace);
+        let campaigns = vector::empty<Campaign>();
+        let i = 1;
+        
+        while (i < store.next_id) {
+            if (table::contains(&store.campaigns, i)) {
+                let camp = *table::borrow(&store.campaigns, i);
+                if (camp.creator == creator) {
+                    vector::push_back(&mut campaigns, camp);
+                };
+            };
+            i = i + 1;
+        };
+
+        // Return the last campaign if any exist
+        let len = vector::length(&campaigns);
+        if (len > 0) {
+            *vector::borrow(&campaigns, len - 1)
+        } else {
+            // If no campaign is found, assert
+            assert!(false, ERR_NO_CAMPAIGN);
+            Campaign {
+                id: 0,
+                creator: @0x0,
+                title: string::utf8(b""),
+                description: string::utf8(b""),
+                prompt: string::utf8(b""),
+                unit_price: 0,
+                minimum_contribution: 0,
+                minimum_score: 0,
+                reward_pool: 0,
+                remaining_reward: 0,
+                public_key_for_encryption: vector::empty<u8>(),
+                active: false,
+            }
+        }
+    }
+
     // Returns the campaign with the specified ID.
     #[view]
     public fun get_campaign(campaign_id: u64): Campaign acquires CampaignStore {
@@ -184,6 +226,25 @@ module marketplace::campaign_manager {
             i = i + 1;
         };
         campaigns
+    }
+
+    #[view]
+    public fun get_all_active_campaigns(): vector<Campaign> acquires CampaignStore {
+        let store = borrow_global<CampaignStore>(@marketplace);
+        let active_campaigns = vector::empty<Campaign>();
+        let i = 1;
+        
+        while (i < store.next_id) {
+            if (table::contains(&store.campaigns, i)) {
+                let camp = *table::borrow(&store.campaigns, i);
+                if (camp.active) {
+                    vector::push_back(&mut active_campaigns, camp);
+                };
+            };
+            i = i + 1;
+        };
+
+        active_campaigns
     }
 
     #[view]

@@ -230,7 +230,7 @@ module marketplace::contribution_manager {
         let result = vector::empty<Contribution>();
         let campaign_ids = campaign_manager::get_all_campaign_ids();
         let i = 0;
-        while (i < vector::length(&campaign_ids)) {
+        while (i < vector::length(&campaign_ids)) { 
             let campaign_id = *vector::borrow(&campaign_ids, i);
             if (table::contains(&store.contributions, campaign_id)) {
                 let campaign_contributions = table::borrow(&store.contributions, campaign_id);
