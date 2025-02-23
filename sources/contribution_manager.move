@@ -64,6 +64,7 @@ module marketplace::contribution_manager {
     const ERR_EXCEED_MAX_SCORE: u64 = 15;
 
     const MAX_SCORE: u64 = 100;
+    const MIN_SCORE: u64 = 0;
 
     fun init_module(account: &signer) {
         let store = ContributionStore {
@@ -106,7 +107,7 @@ module marketplace::contribution_manager {
         assert!(campaign_id > 0, ERR_INVALID_CAMPAIGN_ID);
         assert!(data_count > 0, ERR_INVALID_DATA_COUNT);
         assert!(length(&store_cid) > 0, ERR_INVALID_STORE_CID);
-        assert!(score >= 0, ERR_INVALID_SCORE);
+        assert!(score >= MIN_SCORE, ERR_INVALID_SCORE);
         assert!(score <= MAX_SCORE, ERR_EXCEED_MAX_SCORE);
         assert!(length(&key_for_decryption) > 0, ERR_INVALID_KEY_FOR_DECRYPTION);
         assert!(vector::length(&signature) > 0, ERR_INVALID_SIGNATURE);
@@ -171,7 +172,10 @@ module marketplace::contribution_manager {
         vector::push_back(contributions, contribution);
 
         let unit_price = campaign_manager::get_unit_price(campaign_id);
-        let total_reward = data_count * unit_price;
+        
+        let quality_factor = score / 100;
+
+        let total_reward = data_count * unit_price * quality_factor;
         
         escrow_manager::release_funds_for_contribution(
             campaign_id,
