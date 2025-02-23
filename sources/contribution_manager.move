@@ -63,6 +63,8 @@ module marketplace::contribution_manager {
 
     const ERR_EXCEED_MAX_SCORE: u64 = 15;
 
+    const MAX_SCORE: u64 = 100;
+
     fun init_module(account: &signer) {
         let store = ContributionStore {
             contributions: table::new(),
@@ -105,7 +107,7 @@ module marketplace::contribution_manager {
         assert!(data_count > 0, ERR_INVALID_DATA_COUNT);
         assert!(length(&store_cid) > 0, ERR_INVALID_STORE_CID);
         assert!(score >= 0, ERR_INVALID_SCORE);
-        assert!(score <= campaign_manager::MAX_SCORE, ERR_EXCEED_MAX_SCORE);
+        assert!(score <= MAX_SCORE, ERR_EXCEED_MAX_SCORE);
         assert!(length(&key_for_decryption) > 0, ERR_INVALID_KEY_FOR_DECRYPTION);
         assert!(vector::length(&signature) > 0, ERR_INVALID_SIGNATURE);
     }
