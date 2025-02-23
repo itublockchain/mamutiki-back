@@ -1,4 +1,4 @@
-module marketplace::mamu {
+module mamutiki::mamu {
     use std::string;
     use std::signer;
     use std::vector;
@@ -106,20 +106,20 @@ module marketplace::mamu {
     /// Mint new MAMU tokens to an account
     public entry fun mint_to(_admin: &signer, recipient: address, amount: u64) acquires MovementCapabilities {
         assert!(amount > 0, EZERO_MINT_AMOUNT);
-        assert!(signer::address_of(_admin) == @marketplace, ENOT_AUTHORIZED);
+        assert!(signer::address_of(_admin) == @mamutiki, ENOT_AUTHORIZED);
         check_register(_admin);
 
-        let caps = borrow_global<MovementCapabilities>(@marketplace);
+        let caps = borrow_global<MovementCapabilities>(@mamutiki);
         let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
         coin::deposit(recipient, coins);
     }
     
     public entry fun mint(recipient: &signer, amount: u64) acquires MovementCapabilities {
         assert!(amount > 0, EZERO_MINT_AMOUNT);
-        assert!(signer::address_of(recipient) == @marketplace, ENOT_AUTHORIZED);
+        assert!(signer::address_of(recipient) == @mamutiki, ENOT_AUTHORIZED);
         check_register(recipient);
 
-        let caps = borrow_global<MovementCapabilities>(@marketplace);
+        let caps = borrow_global<MovementCapabilities>(@mamutiki);
         let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
         coin::deposit(signer::address_of(recipient), coins);
     }
@@ -144,7 +144,7 @@ module marketplace::mamu {
         init_module(account);
     }
 
-    #[test(creator = @marketplace)]
+    #[test(creator = @mamutiki)]
     fun test_init_and_mint(creator: &signer) acquires MovementCapabilities {
         // Initialize token
         init_module(creator);

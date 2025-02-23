@@ -4,7 +4,7 @@ import terminal from "../../utils/console";
 import { DEFAULT_VALUES } from "../../utils/constants";
 import DataSigner from "../../classes/DataSigner";
 
-import cli from "../";
+import cli from "..";
 
 import inquirer from "inquirer";
 

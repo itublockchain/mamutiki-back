@@ -1,8 +1,9 @@
 module marketplace::escrow_manager {
     use std::signer;
     use std::table::{Self, Table};
-    use marketplace::mamu;
     use std::account;
+
+    use mamutiki::mamu::{Self, MAMU};
 
     friend marketplace::contribution_manager;
 

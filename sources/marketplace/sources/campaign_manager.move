@@ -7,7 +7,8 @@ module marketplace::campaign_manager {
     use std::timestamp;
     use aptos_framework::account;
     use marketplace::subscription_manager;
-    use marketplace::mamu;
+
+    use mamutiki::mamu::{Self, MAMU};
 
     #[test_only]
     use std::string;

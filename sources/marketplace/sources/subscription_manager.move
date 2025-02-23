@@ -2,7 +2,8 @@ module marketplace::subscription_manager {
     use std::signer;
     use aptos_framework::timestamp;
     use std::table::{Self, Table};
-    use marketplace::mamu;
+
+    use mamutiki::mamu::{Self, MAMU};
 
     #[test_only]
     use aptos_framework::account;
@@ -113,14 +114,14 @@ module marketplace::subscription_manager {
         timestamp::set_time_has_started_for_testing(framework);
 
         // Initialize MAMU token
-        mamu::initialize_for_test(creator);
+        MAMU::initialize_for_test(creator);
 
         // Register accounts for MAMU
-        mamu::register(creator);
-        mamu::register(subscriber);
+        MAMU::register(creator);
+        MAMU::register(subscriber);
 
         // Give test tokens to subscriber (100 MAMU)
-        mamu::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
+        MAMU::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
 
         // Initialize subscription module
         init_module(creator);

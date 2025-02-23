@@ -30,7 +30,38 @@ type PROFILE = {
 export default async function publish() {
   try {
     // Parse config.yaml
-    const file = fs.readFileSync(resolve(".movement/config.yaml"), "utf8");
+    const modules = ["mamutiki", "marketplace"];
+
+    const module_sources = [
+      {
+        name: "mamutiki",
+        source: "sources/mamu",
+      },
+      {
+        name: "marketplace",
+        source: "sources/marketplace",
+      },
+    ];
+
+    // Starts...
+
+    const { module_name } = await inquirer.prompt([
+      {
+        type: "rawlist",
+        name: "module_name",
+        message: "Choose module to publish:",
+        choices: modules,
+      },
+    ]);
+
+    const module_source = module_sources.find(
+      (module) => module.name === module_name
+    )?.source;
+
+    const file = fs.readFileSync(
+      resolve(`${module_source}/.movement/config.yaml`),
+      "utf8"
+    );
     const doc = parseDocument(file);
 
     const json: CONFIG_YAML = doc.toJSON();
@@ -41,52 +72,34 @@ export default async function publish() {
       profiles.push({ name, profile: json.profiles[name] });
     }
 
-    // Parse Move.toml
-
-    const toml_string = fs.readFileSync(resolve("Move.toml"), "utf8");
-    const data = toml.parse(toml_string);
-
-    const modules = [];
-
-    for (let name in data.addresses) {
-      modules.push({
-        name,
-        address: data.addresses[name],
-      });
-    }
-
-    // Starts...
-
-    const [sdk, { module_name, selected_profile }] = await Promise.all([
-      initSDK(),
-      inquirer.prompt([
-        {
-          type: "rawlist",
-          name: "selected_profile",
-          message: "Select a profile to use:",
-          choices: profiles.map((prf) => ({
-            name: prf.name,
-            value: prf,
-          })),
-        },
-        {
-          type: "rawlist",
-          name: "module_name",
-          message: "Choose module to publish:",
-          choices: modules.map((module) => module.name),
-        },
-      ]),
+    const { selected_profile } = await inquirer.prompt([
+      {
+        type: "rawlist",
+        name: "selected_profile",
+        message: "Select a profile to use:",
+        choices: profiles.map((prf) => ({
+          name: prf.name,
+          value: prf,
+        })),
+      },
     ]);
-    await cli.showAccountInformation(sdk);
 
-    const command = `movement move publish --named-address ${module_name}=${selected_profile.profile.account} --profile ${selected_profile.name}`;
+    const command = `movement move publish --package-dir ${module_source} --url ${selected_profile.profile.rest_url}`;
 
-    console.log(`Komut Çalıştırılıyor...\nKomut: ${chalk.yellow(command)}`);
-    const output = await execSync(command);
+    console.log(
+      `Komut Çalıştırılıyor...\nKomut: ${chalk.yellow(
+        `${command} --private-key ...`
+      )}`
+    );
 
-    console.log(output.toString());
-  } catch (error) {
-    console.error("Publishlenirken bir hata oluştu:", error);
-    throw error;
+    const output = execSync(
+      `${command} --private-key ${selected_profile.profile.private_key}`,
+      { input: "yes", encoding: "utf8" }
+    );
+
+    console.log(output);
+  } catch (error: any) {
+    console.error("Publishlenirken bir hata oluştu:");
+    if (error) if (error.stdout) console.error(error.stdout);
   }
 }

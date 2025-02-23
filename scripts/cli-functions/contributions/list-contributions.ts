@@ -3,7 +3,7 @@ import terminal from "../../utils/console";
 
 import inquirer from "inquirer";
 
-import cli from "../";
+import cli from "..";
 
 export default async function addTrustedKey() {
   try {

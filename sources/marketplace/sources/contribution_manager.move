@@ -7,8 +7,8 @@ module marketplace::contribution_manager {
     use aptos_framework::timestamp;
     use aptos_framework::account;
 
-    use marketplace::mamu;
-
+    use mamutiki::mamu::{Self, MAMU};
+    
     use marketplace::campaign_manager;
     use marketplace::escrow_manager;
     use marketplace::verifier;
