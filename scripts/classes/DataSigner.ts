@@ -4,6 +4,8 @@ import {
   SingleKeyAccount,
 } from "@aptos-labs/ts-sdk";
 
+import terminal from "../utils/console";
+
 import { createHash } from "crypto";
 import dotenv from "dotenv";
 
@@ -24,7 +26,7 @@ export default class DataSigner {
   }
 
   getTrustedPublicKey(): string {
-    console.log(this.trustedAccount.publicKey);
+    terminal.log(this.trustedAccount.publicKey);
     return "";
   }
 
@@ -99,6 +101,6 @@ if (require.main === module) {
     100,
     "test_key_for_decryption"
   );
-  console.log("Test imzası:", signature);
-  console.log("Trusted Public Key:", signer.getTrustedPublicKey());
+  terminal.log("Test imzası:", signature);
+  terminal.log("Trusted Public Key:", signer.getTrustedPublicKey());
 }

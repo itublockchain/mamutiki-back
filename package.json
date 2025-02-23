@@ -7,30 +7,28 @@
     "mamutiki": "scripts/mamutiki/app.ts"
   },
   "scripts": {
-    "add-trusted-key": "ts-node scripts/app.ts add-trusted-key",
-    "create-campaign": "ts-node scripts/app.ts create-campaign",
-    "list-campaigns": "ts-node scripts/app.ts list-campaigns",
-    "add-contribution": "ts-node scripts/app.ts add-contribution",
-    "list-contributions": "ts-node scripts/app.ts list-contributions",
-    "subscribe": "ts-node scripts/app.ts subscribe",
-    "update-price": "ts-node scripts/app.ts update-price",
-    "mint-token": "ts-node scripts/app.ts mint-token",
-    "transfer-token": "ts-node scripts/app.ts transfer-token",
-    "register": "ts-node scripts/app.ts register",
+    "start": "ts-node scripts/app.ts start",
     "help": "ts-node scripts/app.ts help",
-    "sign": "ts-node scripts/sign_test_data.ts",
     "node": "aptos node run-local-testnet --with-faucet",
     "build": "aptos move publish --profile default",
-    "execute-project": "aptos move compile && npm run build && npm run start"
+    "execute-project": "aptos move compile && npm run build && npm run start",
+    "publish:marketplace": "movement move publish --profile marketplace",
+    "publish:mamutiki": "movement move publish --named-addresses mamutiki=0x1 --profile mamutiki",
+    "test-ts": "ts-node scripts/test.ts"
   },
   "dependencies": {
     "@aptos-labs/aptos-client": "^1.0.0",
     "@aptos-labs/ts-sdk": "^1.35.0",
+    "@batikankutluer/custom-console": "^1.0.6",
     "@noble/hashes": "^1.7.1",
+    "chalk": "^4.1.2",
     "commander": "^13.1.0",
     "dotenv": "^16.4.7",
+    "inquirer": "^12.4.2",
     "install": "^0.13.0",
-    "npm": "^11.1.0"
+    "npm": "^11.1.0",
+    "toml": "^3.0.0",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
     "@types/node": "^20.17.17",

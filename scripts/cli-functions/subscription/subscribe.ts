@@ -1,25 +1,26 @@
-import { initSDK } from "./init-sdk";
+import terminal from "../../utils/console";
+import { initSDK } from "../../utils/init-sdk";
+
+import cli from "../";
 
 export default async function subscribe() {
   try {
-    console.log("\nAbonelik işlemi başlatılıyor...");
-
     const sdk = await initSDK();
-    console.log("SDK başarıyla başlatıldı.");
+    await cli.showAccountInformation(sdk);
 
-    console.log("Abonelik işlemi gerçekleştiriliyor...");
+    terminal.log("\nAbonelik işlemi başlatılıyor...");
     const txn = await sdk.subscription.subscribe();
 
-    console.log("\n✅ Abonelik başarıyla oluşturuldu!");
-    console.log("Transaction Hash:", txn);
+    terminal.log("\n✅ Abonelik başarıyla oluşturuldu!");
+    terminal.log("Transaction Hash:", txn);
 
     // Abonelik durumunu kontrol et
     const [isActive, remainingTime] = await sdk.subscription.checkSubscription(
       sdk._account.accountAddress.toString()
     );
     if (isActive) {
-      console.log(`\nAbonelik Durumu: Aktif`);
-      console.log(
+      terminal.log(`\nAbonelik Durumu: Aktif`);
+      terminal.log(
         `Kalan Süre: ${Math.floor(remainingTime / 86400)} gün ${Math.floor(
           (remainingTime % 86400) / 3600
         )} saat`

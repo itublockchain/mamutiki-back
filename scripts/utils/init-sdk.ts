@@ -1,4 +1,5 @@
-import AptosMoveSDK from "../utils/AptosMoveSDK";
+import AptosMoveSDK from "./AptosMoveSDK";
+import terminal from "./console";
 
 export async function initSDK() {
   try {
@@ -11,11 +12,6 @@ export async function initSDK() {
     }
 
     const account = sdk.setAccount(privateKey);
-    console.log("\nHesap yüklendi!");
-    console.log("Adres:", `${account.accountAddress}`);
-
-    const balance = await sdk.account.getBalance();
-    console.log("Bakiye:", balance.formatted, "MOVE\n");
 
     return { ...sdk, _account: account };
   } catch (error) {
