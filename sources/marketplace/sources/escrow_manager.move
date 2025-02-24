@@ -1,8 +1,9 @@
 module marketplace::escrow_manager {
     use std::signer;
     use std::table::{Self, Table};
-    use marketplace::mamu;
     use std::account;
+
+    use mamutiki::mamu::{Self, MAMU};
 
     friend marketplace::contribution_manager;
 
@@ -22,9 +23,7 @@ module marketplace::escrow_manager {
         let (resource_signer, signer_cap) = account::create_resource_account(account, b"escrow_manager");
         
         // Register MAMU store for the marketplace account
-        if (!mamu::is_account_registered(signer::address_of(&resource_signer))) {
-            mamu::register(&resource_signer);
-        };
+        mamu::safe_register(account);
 
         let store = EscrowStore {
             escrows: table::new(),
@@ -48,6 +47,7 @@ module marketplace::escrow_manager {
         let resource_addr = signer::address_of(&resource_signer);
 
         // Transfer the funds to marketplace account
+        mamu::check_register(&resource_signer);
         mamu::transfer(account, resource_addr, amount);
 
         // Create the escrow record
@@ -86,7 +86,7 @@ module marketplace::escrow_manager {
 
         let locked_amount = *table::borrow(&store.escrows, campaign_id);
 
-        let platform_fee = amount * 2 / 100;
+        let platform_fee = (amount * 2) / 100;
         let total_deduction = amount + platform_fee;
         assert!(locked_amount >= total_deduction, ERR_NOT_ENOUGH_BALANCE);
 

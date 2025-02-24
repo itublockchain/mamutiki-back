@@ -2,7 +2,8 @@ module marketplace::subscription_manager {
     use std::signer;
     use aptos_framework::timestamp;
     use std::table::{Self, Table};
-    use marketplace::mamu;
+
+    use mamutiki::mamu::{Self, MAMU};
 
     #[test_only]
     use aptos_framework::account;
@@ -28,6 +29,8 @@ module marketplace::subscription_manager {
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
     fun init_module(creator: &signer) {
+        mamu::safe_register(creator);
+        
         // Set initial price
         move_to(creator, SubscriptionPrice {
             price: INITIAL_PRICE
@@ -60,6 +63,8 @@ module marketplace::subscription_manager {
             let end_time = table::borrow(&subscriptions.subscriptions, subscriber_addr);
             assert!(current_time > *end_time, EACTIVE_SUBSCRIPTION_EXISTS);
         };
+
+        mamu::safe_register(subscriber);
         
         // Process payment directly to marketplace address
         mamu::transfer(subscriber, @marketplace, price);
@@ -113,14 +118,14 @@ module marketplace::subscription_manager {
         timestamp::set_time_has_started_for_testing(framework);
 
         // Initialize MAMU token
-        mamu::initialize_for_test(creator);
+        MAMU::initialize_for_test(creator);
 
         // Register accounts for MAMU
-        mamu::register(creator);
-        mamu::register(subscriber);
+        MAMU::register(creator);
+        MAMU::register(subscriber);
 
         // Give test tokens to subscriber (100 MAMU)
-        mamu::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
+        MAMU::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
 
         // Initialize subscription module
         init_module(creator);

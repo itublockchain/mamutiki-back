@@ -4,6 +4,8 @@ import {
   SingleKeyAccount,
 } from "@aptos-labs/ts-sdk";
 
+import terminal from "../utils/console";
+
 import { createHash } from "crypto";
 import dotenv from "dotenv";
 
@@ -12,9 +14,9 @@ dotenv.config();
 export default class DataSigner {
   private trustedAccount: SingleKeyAccount;
 
-  constructor(privateKey: string = process.env.TRUSTED_PRIVATE_KEY!) {
+  constructor(privateKey: string = process.env.MODULE_PRIVATE_KEY!) {
     const formattedPrivateKey = new Ed25519PrivateKey(
-      Buffer.from(privateKey, "hex")
+      Buffer.from(privateKey.replace("0x", ""), "hex")
     );
 
     this.trustedAccount = Account.fromPrivateKey({
@@ -24,8 +26,8 @@ export default class DataSigner {
   }
 
   getTrustedPublicKey(): string {
-    console.log(this.trustedAccount.publicKey);
-    return "";
+    terminal.log(this.trustedAccount.publicKey.toString());
+    return this.trustedAccount.publicKey.toString();
   }
 
   signContributionData(
@@ -99,6 +101,6 @@ if (require.main === module) {
     100,
     "test_key_for_decryption"
   );
-  console.log("Test imzası:", signature);
-  console.log("Trusted Public Key:", signer.getTrustedPublicKey());
+  terminal.log("Test imzası:", signature);
+  terminal.log("Trusted Public Key:", signer.getTrustedPublicKey());
 }

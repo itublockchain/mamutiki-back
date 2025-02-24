@@ -1,7 +1,7 @@
 import BaseManager from "./BaseManager";
 import AptosUtils from "../utils/AptosUtils";
 import { Campaign } from "../types";
-
+import terminal from "../utils/console";
 // Campaign Manager
 class CampaignManager extends BaseManager {
   async createCampaign(
@@ -53,6 +53,32 @@ class CampaignManager extends BaseManager {
       );
     } catch {
       return [];
+    }
+  }
+
+  async getAllActiveCampaigns(): Promise<Campaign[]> {
+    try {
+      const response = await this.viewFunction(
+        "campaign_manager::get_all_active_campaigns"
+      );
+      return (response[0] as any[]).map((camp) =>
+        this.parseCampaignResponse(camp)
+      );
+    } catch {
+      return [];
+    }
+  }
+
+  async lastCreatedCampaign(address: string): Promise<Campaign> {
+    try {
+      const response = await this.viewFunction(
+        "campaign_manager::last_created_campaign",
+        [address]
+      );
+      return this.parseCampaignResponse(response[0]);
+    } catch (error) {
+      terminal.error(error);
+      throw error;
     }
   }
 

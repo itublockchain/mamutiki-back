@@ -2,12 +2,13 @@ module marketplace::campaign_manager {
     use std::signer;
     use std::table;
     use std::vector;
-    use std::string::String;
+    use std::string::{Self, String, length};
     use std::event;
     use std::timestamp;
     use aptos_framework::account;
     use marketplace::subscription_manager;
-    use marketplace::mamu;
+
+    use mamutiki::mamu::{Self, MAMU};
 
     #[test_only]
     use std::string;
@@ -28,6 +29,7 @@ module marketplace::campaign_manager {
         remaining_reward: u64,
         public_key_for_encryption: vector<u8>,
         active: bool,
+        created_at: u64,
     }
     
     // Store using table to store campaigns.
@@ -47,12 +49,24 @@ module marketplace::campaign_manager {
         minimum_contribution: u64,
         minimum_score: u64,
         public_key_for_encryption: vector<u8>,
-        timestamp: u64
+        created_at: u64
     }
 
     const ERR_NO_SUBSCRIPTION: u64 = 1001;
+    const ERR_NO_CAMPAIGN: u64 = 1002;
 
     const ERR_INSUFFICIENT_FUNDS: u64 = 1;
+    const ERR_INVALID_TITLE: u64 = 2;
+    const ERR_INVALID_DESCRIPTION: u64 = 3;
+    const ERR_INVALID_PROMPT: u64 = 4;
+    const ERR_INVALID_UNIT_PRICE: u64 = 5;
+    const ERR_INVALID_MINIMUM_CONTRIBUTION: u64 = 6;
+    const ERR_INVALID_MINIMUM_SCORE: u64 = 7;
+    const ERR_INVALID_REWARD_POOL: u64 = 8;
+    const ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION: u64 = 9;
+    const ERR_EXCEED_MAX_SCORE: u64 = 10;
+
+    const MAX_SCORE: u64 = 100;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
@@ -62,6 +76,28 @@ module marketplace::campaign_manager {
             create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
+        mamu::safe_register(account);
+    }
+
+    public fun create_campaign_check_input_validity(
+        title: String,
+        description: String,
+        prompt: String,
+        unit_price: u64,
+        minimum_contribution: u64,
+        minimum_score: u64,
+        reward_pool: u64,
+        public_key_for_encryption: vector<u8>
+    ) {
+        assert!(length(&title) > 0, ERR_INVALID_TITLE);
+        assert!(length(&description) > 0, ERR_INVALID_DESCRIPTION);
+        assert!(length(&prompt) > 0, ERR_INVALID_PROMPT);
+        assert!(unit_price > 0, ERR_INVALID_UNIT_PRICE);
+        assert!(minimum_contribution >= 0, ERR_INVALID_MINIMUM_CONTRIBUTION);
+        assert!(minimum_score >= 0, ERR_INVALID_MINIMUM_SCORE);
+        assert!(minimum_score <= MAX_SCORE, ERR_EXCEED_MAX_SCORE);
+        assert!(reward_pool > 0, ERR_INVALID_REWARD_POOL);
+        assert!(vector::length(&public_key_for_encryption) > 0, ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION);
     }
 
     // Creates a new campaign and adds it to the store.
@@ -84,6 +120,8 @@ module marketplace::campaign_manager {
             assert!(minimum_contribution == 0, ERR_NO_SUBSCRIPTION);
         };
 
+        create_campaign_check_input_validity(title, description, prompt, unit_price, minimum_contribution, minimum_score, reward_pool, public_key_for_encryption);
+
         // Get store from module address
         let module_addr = @marketplace;
         let store_ref = borrow_global_mut<CampaignStore>(module_addr);
@@ -92,6 +130,8 @@ module marketplace::campaign_manager {
 
         // First, lock the funds in the escrow
         marketplace::escrow_manager::lock_funds(account, id, reward_pool, module_addr);
+
+        let _created_at = timestamp::now_seconds();
 
         let new_campaign = Campaign {
             id,
@@ -106,6 +146,7 @@ module marketplace::campaign_manager {
             remaining_reward: reward_pool,
             public_key_for_encryption,
             active: true,
+            created_at: _created_at,
         };
         table::add(&mut store_ref.campaigns, id, new_campaign);
 
@@ -119,8 +160,44 @@ module marketplace::campaign_manager {
             minimum_contribution,
             minimum_score,
             public_key_for_encryption,
-            timestamp: timestamp::now_seconds(),
+            created_at: _created_at,
         });
+    }
+
+    #[view]
+    public fun last_created_campaign(creator: address): Campaign acquires CampaignStore {
+        // Get all campaigns by the creator
+        let store = borrow_global<CampaignStore>(@marketplace);
+        let campaigns = vector::empty<Campaign>();
+        
+        let i = store.next_id - 1;
+        while (i > 0) {
+            if (table::contains(&store.campaigns, i)) {
+                let camp = *table::borrow(&store.campaigns, i);
+                if (camp.creator == creator) {
+                    return camp;
+                }
+            };
+            i = i - 1;
+        };
+
+        assert!(false, ERR_NO_CAMPAIGN);
+            Campaign {
+                id: 0,
+                creator: @0x0,
+                title: string::utf8(b""),
+                description: string::utf8(b""),
+                prompt: string::utf8(b""),
+                unit_price: 0,
+                minimum_contribution: 0,
+                minimum_score: 0,
+                reward_pool: 0,
+                remaining_reward: 0,
+                public_key_for_encryption: vector::empty<u8>(),
+                active: false,
+                created_at: 0,
+            }
+
     }
 
     // Returns the campaign with the specified ID.
@@ -150,6 +227,25 @@ module marketplace::campaign_manager {
             i = i + 1;
         };
         campaigns
+    }
+
+    #[view]
+    public fun get_all_active_campaigns(): vector<Campaign> acquires CampaignStore {
+        let store = borrow_global<CampaignStore>(@marketplace);
+        let active_campaigns = vector::empty<Campaign>();
+        let i = 1;
+        
+        while (i < store.next_id) {
+            if (table::contains(&store.campaigns, i)) {
+                let camp = *table::borrow(&store.campaigns, i);
+                if (camp.active) {
+                    vector::push_back(&mut active_campaigns, camp);
+                };
+            };
+            i = i + 1;
+        };
+
+        active_campaigns
     }
 
     #[view]
