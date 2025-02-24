@@ -8,7 +8,7 @@ import terminal, { isTest } from "../../utils/console";
 export default async function addTrustedKey() {
   try {
     const [sdk, { publicKey }] = await Promise.all([
-      initSDK(),
+      initSDK({ moduleAccount: true }),
       inquirer.prompt([
         {
           type: "input",

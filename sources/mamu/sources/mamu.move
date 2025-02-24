@@ -170,8 +170,7 @@ module mamutiki::mamu {
         from: &signer,
         to: address,
         amount: u64,
-    ) {
-        assert!(amount > 0, EZERO_MINT_AMOUNT);
+    ) { 
         assert!(coin::is_account_registered<MAMU>(to), ENOT_REGISTERED);
         coin::transfer<MAMU>(from, to, amount);
     }

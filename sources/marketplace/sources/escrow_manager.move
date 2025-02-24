@@ -47,6 +47,7 @@ module marketplace::escrow_manager {
         let resource_addr = signer::address_of(&resource_signer);
 
         // Transfer the funds to marketplace account
+        mamu::check_register(&resource_signer);
         mamu::transfer(account, resource_addr, amount);
 
         // Create the escrow record
@@ -85,7 +86,7 @@ module marketplace::escrow_manager {
 
         let locked_amount = *table::borrow(&store.escrows, campaign_id);
 
-        let platform_fee = amount * 2 / 100;
+        let platform_fee = (amount * 2) / 100;
         let total_deduction = amount + platform_fee;
         assert!(locked_amount >= total_deduction, ERR_NOT_ENOUGH_BALANCE);
 

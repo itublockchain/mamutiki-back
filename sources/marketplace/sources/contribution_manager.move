@@ -175,9 +175,7 @@ module marketplace::contribution_manager {
 
         let unit_price = campaign_manager::get_unit_price(campaign_id);
         
-        let quality_factor = score / 100;
-
-        let total_reward = data_count * unit_price * quality_factor;
+        let total_reward = (data_count * unit_price * score) / 100;
         
         escrow_manager::release_funds_for_contribution(
             campaign_id,

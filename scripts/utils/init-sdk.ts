@@ -1,12 +1,14 @@
 import AptosMoveSDK from "./AptosMoveSDK";
 import terminal from "./console";
 
-export async function initSDK() {
+export async function initSDK(props?: { moduleAccount?: boolean }) {
   try {
     const sdk = new AptosMoveSDK();
 
     // Özel anahtarı env'den al ve hesabı oluştur
-    const ACCOUNT_PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY;
+    const ACCOUNT_PRIVATE_KEY = props?.moduleAccount
+      ? process.env.MODULE_PRIVATE_KEY
+      : process.env.ACCOUNT_PRIVATE_KEY;
     if (!ACCOUNT_PRIVATE_KEY) {
       throw new Error("ACCOUNT_PRIVATE_KEY env değişkeni bulunamadı!");
     }

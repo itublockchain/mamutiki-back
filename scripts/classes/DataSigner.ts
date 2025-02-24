@@ -14,9 +14,9 @@ dotenv.config();
 export default class DataSigner {
   private trustedAccount: SingleKeyAccount;
 
-  constructor(privateKey: string = process.env.TRUSTED_PRIVATE_KEY!) {
+  constructor(privateKey: string = process.env.MODULE_PRIVATE_KEY!) {
     const formattedPrivateKey = new Ed25519PrivateKey(
-      Buffer.from(privateKey, "hex")
+      Buffer.from(privateKey.replace("0x", ""), "hex")
     );
 
     this.trustedAccount = Account.fromPrivateKey({
@@ -26,8 +26,8 @@ export default class DataSigner {
   }
 
   getTrustedPublicKey(): string {
-    terminal.log(this.trustedAccount.publicKey);
-    return "";
+    terminal.log(this.trustedAccount.publicKey.toString());
+    return this.trustedAccount.publicKey.toString();
   }
 
   signContributionData(
