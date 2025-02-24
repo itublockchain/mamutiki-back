@@ -75,6 +75,7 @@ module marketplace::campaign_manager {
             create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
+        mamu::safe_register(account);
     }
 
     public fun create_campaign_check_input_validity(

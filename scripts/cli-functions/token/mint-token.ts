@@ -1,4 +1,4 @@
-import { initSDK } from "../../utils/init-sdk";
+import { tokenSDK } from "../../utils/init-token-sdk";
 import terminal from "../../utils/console";
 
 import inquirer from "inquirer";
@@ -6,8 +6,8 @@ import cli from "../";
 
 export default async function mintToken() {
   try {
-    const [sdk, { input_amount }] = await Promise.all([
-      initSDK(),
+    const [{ token }, { input_amount }] = await Promise.all([
+      tokenSDK(),
       inquirer.prompt([
         {
           type: "input",
@@ -16,11 +16,10 @@ export default async function mintToken() {
         },
       ]),
     ]);
-    await cli.showAccountInformation(sdk);
 
     const amount = parseInt(input_amount);
 
-    const txn_mint = await sdk.account.mint(amount);
+    const txn_mint = await token.mint(amount);
     terminal.log("Token mintleniyor...");
     terminal.log("Transaction Hash Mint:", txn_mint);
   } catch (error) {

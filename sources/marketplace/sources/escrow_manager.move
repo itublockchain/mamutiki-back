@@ -23,9 +23,7 @@ module marketplace::escrow_manager {
         let (resource_signer, signer_cap) = account::create_resource_account(account, b"escrow_manager");
         
         // Register MAMU store for the marketplace account
-        if (!mamu::is_account_registered(signer::address_of(&resource_signer))) {
-            mamu::register(&resource_signer);
-        };
+        mamu::safe_register(account);
 
         let store = EscrowStore {
             escrows: table::new(),

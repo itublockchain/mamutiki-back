@@ -29,6 +29,8 @@ module marketplace::subscription_manager {
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
     fun init_module(creator: &signer) {
+        mamu::safe_register(creator);
+        
         // Set initial price
         move_to(creator, SubscriptionPrice {
             price: INITIAL_PRICE
@@ -61,6 +63,8 @@ module marketplace::subscription_manager {
             let end_time = table::borrow(&subscriptions.subscriptions, subscriber_addr);
             assert!(current_time > *end_time, EACTIVE_SUBSCRIPTION_EXISTS);
         };
+
+        mamu::safe_register(subscriber);
         
         // Process payment directly to marketplace address
         mamu::transfer(subscriber, @marketplace, price);

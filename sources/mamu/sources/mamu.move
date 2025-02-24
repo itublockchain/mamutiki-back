@@ -1,7 +1,8 @@
 module mamutiki::mamu {
     use std::string;
     use std::signer;
-    use std::vector;
+    use std::vector;    
+    use aptos_framework::math64;
     use aptos_framework::coin::{Self, BurnCapability, FreezeCapability, MintCapability, CoinStore};
     use aptos_framework::account;
 
@@ -18,7 +19,7 @@ module mamutiki::mamu {
     const EZERO_MINT_AMOUNT: u64 = 4;
     const EZERO_BURN_AMOUNT: u64 = 5;
     const ENOT_REGISTERED: u64 = 6;
-
+    const EFAUCET_LOCKED: u64 = 7;
     /// =================== Resources & Structs ===================
 
     /// Holds the refs for managing Movement
@@ -26,6 +27,7 @@ module mamutiki::mamu {
         mint_cap: MintCapability<MAMU>,
         burn_cap: BurnCapability<MAMU>,
         freeze_cap: FreezeCapability<MAMU>,
+        faucet_locked: bool,
     }
 
     /// The MAMU token type
@@ -47,6 +49,7 @@ module mamutiki::mamu {
             mint_cap,
             burn_cap,
             freeze_cap,
+            faucet_locked: false,
         });
     }
 
@@ -122,6 +125,42 @@ module mamutiki::mamu {
         let caps = borrow_global<MovementCapabilities>(@mamutiki);
         let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
         coin::deposit(signer::address_of(recipient), coins);
+    }
+
+    public fun mint_to_faucet(recipient: address, amount: u64) acquires MovementCapabilities {
+        let caps = borrow_global<MovementCapabilities>(@mamutiki);
+        let coins = coin::mint<MAMU>(amount, &caps.mint_cap);
+        coin::deposit(recipient, coins);
+    }
+
+    /// ======================= FAUCET =======================
+
+    #[view]
+    public fun is_faucet_locked(): bool acquires MovementCapabilities {
+        let caps = borrow_global<MovementCapabilities>(@mamutiki);
+        caps.faucet_locked
+    }
+
+    public entry fun lock_faucet(admin: &signer) acquires MovementCapabilities {
+        assert!(signer::address_of(admin) == @mamutiki, ENOT_AUTHORIZED);
+
+        let caps = borrow_global_mut<MovementCapabilities>(@mamutiki);
+        caps.faucet_locked = true;
+    }
+
+    public entry fun unlock_faucet(admin: &signer) acquires MovementCapabilities {
+        assert!(signer::address_of(admin) == @mamutiki, ENOT_AUTHORIZED);   
+        
+        let caps = borrow_global_mut<MovementCapabilities>(@mamutiki);
+        caps.faucet_locked = false;
+    }
+
+    public entry fun faucet(recipient: &signer) acquires MovementCapabilities {
+        assert!(is_faucet_locked() == false, EFAUCET_LOCKED);
+        check_register(recipient);
+
+        let amount: u64 = 100 * math64::pow(10, (MOVEMENT_DECIMALS as u64));
+        mint_to_faucet(signer::address_of(recipient), amount);
     }
 
     /// =================== User Functions ===================

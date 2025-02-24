@@ -12,6 +12,7 @@ import updatePrice from "./subscription/update-price";
 import main from "./main";
 import showAccountInformation from "./account/showAccountInformation";
 import publish from "./automation/publish";
+import faucet from "./token/faucet";
 
 export default {
   addTrustedKey,
@@ -28,4 +29,5 @@ export default {
   main,
   showAccountInformation,
   publish,
+  faucet,
 };

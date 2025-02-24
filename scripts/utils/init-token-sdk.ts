@@ -1,9 +1,9 @@
-import AptosMoveSDK from "./AptosMoveSDK";
+import { TokenSDK } from "./AptosMoveSDK";
 import terminal from "./console";
 
-export async function initSDK() {
+export async function tokenSDK() {
   try {
-    const sdk = new AptosMoveSDK();
+    const sdk = new TokenSDK();
 
     // Özel anahtarı env'den al ve hesabı oluştur
     const ACCOUNT_PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY;

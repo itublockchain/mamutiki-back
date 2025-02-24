@@ -1,4 +1,4 @@
-import { initSDK } from "../../utils/init-sdk";
+import { tokenSDK } from "../../utils/init-token-sdk";
 import terminal from "../../utils/console";
 
 import inquirer from "inquirer";
@@ -6,8 +6,8 @@ import cli from "../";
 
 export default async function transferToken() {
   try {
-    const [sdk, { input_amount, input_recipient }] = await Promise.all([
-      initSDK(),
+    const [{ token }, { input_amount, input_recipient }] = await Promise.all([
+      tokenSDK(),
       inquirer.prompt([
         {
           type: "input",
@@ -17,16 +17,15 @@ export default async function transferToken() {
         {
           type: "input",
           name: "input_recipient",
-          message: "Enter the recipient's public key:",
+          message: "Enter the recipient's account address:",
         },
       ]),
     ]);
-    await cli.showAccountInformation(sdk);
 
     const amount = parseInt(input_amount);
     const recipient = String(input_recipient);
 
-    const txn_transfer = await sdk.account.transferToken(amount, recipient);
+    const txn_transfer = await token.transferToken(amount, recipient);
     terminal.log("Token transferleniyor...");
 
     terminal.log("Transaction Hash Transfer:", txn_transfer);

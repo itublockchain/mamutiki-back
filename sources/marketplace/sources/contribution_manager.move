@@ -73,6 +73,8 @@ module marketplace::contribution_manager {
         };
         move_to(account, store);
 
+        mamu::safe_register(account);
+
         // Initialize Verifier module
         verifier::initialize(account);
     }

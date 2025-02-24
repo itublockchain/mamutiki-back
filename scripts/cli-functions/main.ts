@@ -23,6 +23,7 @@ export default async function main() {
         new inquirer.Separator(),
         { name: chalk.magenta("Mint token"), value: "Mint token" },
         { name: chalk.magenta("Transfer token"), value: "Transfer token" },
+        { name: chalk.magenta("Faucet"), value: "Faucet" },
         new inquirer.Separator(),
         { name: "Register", value: "Register" },
         { name: "Subscribe", value: "Subscribe" },
@@ -57,6 +58,9 @@ export default async function main() {
       break;
     case "Transfer token":
       await cli.transferToken();
+      break;
+    case "Faucet":
+      await cli.faucet();
       break;
     case "Register":
       await cli.register();
