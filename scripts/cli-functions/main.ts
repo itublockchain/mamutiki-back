@@ -20,6 +20,14 @@ export default async function main() {
         new inquirer.Separator(),
         { name: chalk.blueBright("List campaigns"), value: "List campaigns" },
         { name: chalk.blue("List contributions"), value: "List contributions" },
+        {
+          name: chalk.blue("Get all active campaigns"),
+          value: "Get all active campaigns",
+        },
+        {
+          name: chalk.blue("Get last created campaign"),
+          value: "Get last created campaign",
+        },
         new inquirer.Separator(),
         { name: chalk.magenta("Mint token"), value: "Mint token" },
         { name: chalk.magenta("Transfer token"), value: "Transfer token" },
@@ -46,6 +54,12 @@ export default async function main() {
       break;
     case "List campaigns":
       await cli.listCampaigns();
+      break;
+    case "Get all active campaigns":
+      await cli.getAllActiveCampaigns();
+      break;
+    case "Get last created campaign":
+      await cli.lastCreatedCampaign();
       break;
     case "Add contribution":
       await cli.addContribution();

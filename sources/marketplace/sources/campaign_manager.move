@@ -29,6 +29,7 @@ module marketplace::campaign_manager {
         remaining_reward: u64,
         public_key_for_encryption: vector<u8>,
         active: bool,
+        created_at: u64,
     }
     
     // Store using table to store campaigns.
@@ -48,7 +49,7 @@ module marketplace::campaign_manager {
         minimum_contribution: u64,
         minimum_score: u64,
         public_key_for_encryption: vector<u8>,
-        timestamp: u64
+        created_at: u64
     }
 
     const ERR_NO_SUBSCRIPTION: u64 = 1001;
@@ -130,6 +131,8 @@ module marketplace::campaign_manager {
         // First, lock the funds in the escrow
         marketplace::escrow_manager::lock_funds(account, id, reward_pool, module_addr);
 
+        let _created_at = timestamp::now_seconds();
+
         let new_campaign = Campaign {
             id,
             creator: signer::address_of(account),
@@ -143,6 +146,7 @@ module marketplace::campaign_manager {
             remaining_reward: reward_pool,
             public_key_for_encryption,
             active: true,
+            created_at: _created_at,
         };
         table::add(&mut store_ref.campaigns, id, new_campaign);
 
@@ -156,34 +160,28 @@ module marketplace::campaign_manager {
             minimum_contribution,
             minimum_score,
             public_key_for_encryption,
-            timestamp: timestamp::now_seconds(),
+            created_at: _created_at,
         });
     }
 
     #[view]
     public fun last_created_campaign(creator: address): Campaign acquires CampaignStore {
-        // Get all campaigns by the creator and sort them by timestamp then get the last one
+        // Get all campaigns by the creator
         let store = borrow_global<CampaignStore>(@marketplace);
         let campaigns = vector::empty<Campaign>();
-        let i = 1;
         
-        while (i < store.next_id) {
+        let i = store.next_id - 1;
+        while (i > 0) {
             if (table::contains(&store.campaigns, i)) {
                 let camp = *table::borrow(&store.campaigns, i);
                 if (camp.creator == creator) {
-                    vector::push_back(&mut campaigns, camp);
-                };
+                    return camp;
+                }
             };
-            i = i + 1;
+            i = i - 1;
         };
 
-        // Return the last campaign if any exist
-        let len = vector::length(&campaigns);
-        if (len > 0) {
-            *vector::borrow(&campaigns, len - 1)
-        } else {
-            // If no campaign is found, assert
-            assert!(false, ERR_NO_CAMPAIGN);
+        assert!(false, ERR_NO_CAMPAIGN);
             Campaign {
                 id: 0,
                 creator: @0x0,
@@ -197,8 +195,9 @@ module marketplace::campaign_manager {
                 remaining_reward: 0,
                 public_key_for_encryption: vector::empty<u8>(),
                 active: false,
+                created_at: 0,
             }
-        }
+
     }
 
     // Returns the campaign with the specified ID.

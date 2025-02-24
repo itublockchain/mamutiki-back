@@ -1,7 +1,7 @@
 import BaseManager from "./BaseManager";
 import { Account, Ed25519PrivateKey, Ed25519Account } from "@aptos-labs/ts-sdk";
 import CONFIG from "../utils/config";
-import { AccountBalance } from "../types";
+import { AccountBalance, Campaign } from "../types";
 import AptosUtils from "../utils/AptosUtils";
 
 // Account Manager
@@ -47,8 +47,6 @@ class AccountManager extends BaseManager {
     //await this.faucetClient.fundAccount(this.account.address(), amount);
     await this.getBalance();
   }
-
-  
 }
 
 export default AccountManager;

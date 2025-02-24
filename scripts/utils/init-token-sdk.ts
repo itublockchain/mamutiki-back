@@ -1,12 +1,14 @@
 import { TokenSDK } from "./AptosMoveSDK";
 import terminal from "./console";
 
-export async function tokenSDK() {
+export async function tokenSDK(props?: { isFaucet?: boolean }) {
   try {
     const sdk = new TokenSDK();
 
     // Özel anahtarı env'den al ve hesabı oluştur
-    const ACCOUNT_PRIVATE_KEY = process.env.ACCOUNT_PRIVATE_KEY;
+    const ACCOUNT_PRIVATE_KEY = props?.isFaucet
+      ? process.env.TOKEN_MODULE_PRIVATE_KEY
+      : process.env.ACCOUNT_PRIVATE_KEY;
     if (!ACCOUNT_PRIVATE_KEY) {
       throw new Error("ACCOUNT_PRIVATE_KEY env değişkeni bulunamadı!");
     }

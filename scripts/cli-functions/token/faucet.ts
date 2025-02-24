@@ -6,8 +6,9 @@ import cli from "../";
 
 export default async function mintToken() {
   try {
-    const [{ token }, { faucet_action }] = await Promise.all([
+    const [{ token }, {token:faucet}, { faucet_action }] = await Promise.all([
       tokenSDK(),
+      tokenSDK({ isFaucet: true }),
       inquirer.prompt([
         {
           type: "rawlist",
@@ -24,10 +25,10 @@ export default async function mintToken() {
 
     switch (faucet_action) {
       case 1:
-        terminal.write("Transaction hash:", await token.lockFaucet());
+        terminal.write("Transaction hash:", await faucet.lockFaucet());
         break;
       case 2:
-        terminal.write("Transaction hash:", await token.unlockFaucet());
+        terminal.write("Transaction hash:", await faucet.unlockFaucet());
         break;
       case 3:
         terminal.write("Transaction hash:", await token.faucet());

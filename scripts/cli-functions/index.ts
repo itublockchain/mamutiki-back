@@ -13,6 +13,8 @@ import main from "./main";
 import showAccountInformation from "./account/showAccountInformation";
 import publish from "./automation/publish";
 import faucet from "./token/faucet";
+import getAllActiveCampaigns from "./campaigns/get_all_active_campaigns";
+import lastCreatedCampaign from "./campaigns/last_created_campaign";
 
 export default {
   addTrustedKey,
@@ -30,4 +32,6 @@ export default {
   showAccountInformation,
   publish,
   faucet,
+  getAllActiveCampaigns,
+  lastCreatedCampaign,
 };
