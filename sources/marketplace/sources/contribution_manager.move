@@ -7,7 +7,7 @@ module marketplace::contribution_manager {
     use aptos_framework::timestamp;
     use aptos_framework::account;
 
-    use mamutiki::mamu::{Self, MAMU};
+    use data::DATA::{Self};
     
     use marketplace::campaign_manager;
     use marketplace::escrow_manager;
@@ -73,8 +73,6 @@ module marketplace::contribution_manager {
         };
         move_to(account, store);
 
-        mamu::safe_register(account);
-
         // Initialize Verifier module
         verifier::initialize(account);
     }
@@ -125,7 +123,6 @@ module marketplace::contribution_manager {
         key_for_decryption: String,
         signature: vector<u8>,
         ) acquires ContributionStore {
-        mamu::check_register(account);
         
         let contributor = signer::address_of(account);
 

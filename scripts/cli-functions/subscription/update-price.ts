@@ -6,11 +6,10 @@ import cli from "../";
 
 export default async function updatePrice() {
   try {
-    const sdk = await initSDK();
-    await cli.showAccountInformation(sdk);
+    const sdk = await initSDK({ moduleAccount: true });
 
     const newPrice = DEFAULT_VALUES.subscription.price;
-    const priceInOcta = newPrice * 100_000_000;
+    const priceInOcta = newPrice * 10 ** 6;
 
     terminal.log(
       `\nFiyat güncelleniyor: ${newPrice} APT (${priceInOcta} Octa)`

@@ -8,7 +8,7 @@ module marketplace::campaign_manager {
     use aptos_framework::account;
     use marketplace::subscription_manager;
 
-    use mamutiki::mamu::{Self, MAMU};
+    use data::DATA::{Self};
 
     #[test_only]
     use std::string;
@@ -76,7 +76,6 @@ module marketplace::campaign_manager {
             create_campaign_events: account::new_event_handle<CampaignCreatedEvent>(account),
         };
         move_to(account, store);
-        mamu::safe_register(account);
     }
 
     public fun create_campaign_check_input_validity(
@@ -112,7 +111,6 @@ module marketplace::campaign_manager {
         reward_pool: u64,
         public_key_for_encryption: vector<u8>
     ) acquires CampaignStore {
-        mamu::check_register(account);
         let (has_subscription, _) = subscription_manager::check_subscription(signer::address_of(account));
         
         // If there is no subscription, minimum_contribution must be 0
@@ -314,15 +312,15 @@ module marketplace::campaign_manager {
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&campaign_manager_account);
+        DATA::initialize_for_test(&campaign_manager_account);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&campaign_manager_account);
-        mamu::register(&escrow_manager);
+        DATA::register(&test_account);
+        DATA::register(&campaign_manager_account);
+        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&campaign_manager_account, signer::address_of(&test_account), 1000_000_000_000);
+        DATA::mint_to(&campaign_manager_account, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules in correct order
         marketplace::subscription_manager::initialize_for_test(&campaign_manager_account);
@@ -368,14 +366,14 @@ module marketplace::campaign_manager {
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&campaign_manager);
+        DATA::initialize_for_test(&campaign_manager);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&campaign_manager);
+        DATA::register(&test_account);
+        DATA::register(&campaign_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
+        DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules
         marketplace::subscription_manager::initialize_for_test(&campaign_manager);
@@ -436,14 +434,14 @@ module marketplace::campaign_manager {
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&campaign_manager);
+        DATA::initialize_for_test(&campaign_manager);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&campaign_manager);
+        DATA::register(&test_account);
+        DATA::register(&campaign_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
+        DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules
         marketplace::subscription_manager::initialize_for_test(&campaign_manager);
@@ -501,14 +499,14 @@ module marketplace::campaign_manager {
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&campaign_manager);
+        DATA::initialize_for_test(&campaign_manager);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&campaign_manager);
+        DATA::register(&test_account);
+        DATA::register(&campaign_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
+        DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
         
         // Initialize modules
         marketplace::subscription_manager::initialize_for_test(&campaign_manager);

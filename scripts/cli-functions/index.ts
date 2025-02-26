@@ -6,7 +6,6 @@ import listContributions from "./contributions/list-contributions";
 import help from "./help";
 import mintToken from "./token/mint-token";
 import transferToken from "./token/transfer-token";
-import register from "./token/register";
 import subscribe from "./subscription/subscribe";
 import updatePrice from "./subscription/update-price";
 import main from "./main";
@@ -25,7 +24,6 @@ export default {
   help,
   mintToken,
   transferToken,
-  register,
   subscribe,
   updatePrice,
   main,

@@ -5,13 +5,17 @@ module mamutiki::mamu {
     use aptos_framework::math64;
     use aptos_framework::coin::{Self, BurnCapability, FreezeCapability, MintCapability, CoinStore};
     use aptos_framework::account;
-
+    use aptos_framework::table;
     /// =================== Constants ===================
 
     /// Token configuration
-    const MOVEMENT_NAME: vector<u8> = b"MAMUTIKI";
-    const MOVEMENT_SYMBOL: vector<u8> = b"MAMU";
+    const MOVEMENT_NAME: vector<u8> = string::utf8(b"Data Share");
+    const MOVEMENT_SYMBOL: vector<u8> = string::utf8(b"DATA");
+    const MOVEMENT_MAX_SUPPLY: u64 = 1_000_000_000_000;
     const MOVEMENT_DECIMALS: u8 = 6;
+    const MOVEMENT_MONITORED_SUPPLY: bool = true;
+    const LOGO_URL: vector<u8> = string::utf8(b"https://www.datagora.xyz/logo.png");
+    const WEBSITE_URL: vector<u8> = string::utf8(b"https://www.datagora.xyz");
 
     /// Error codes
     const ENOT_AUTHORIZED: u64 = 1;
@@ -30,6 +34,10 @@ module mamutiki::mamu {
         faucet_locked: bool,
     }
 
+    struct CoinConversionMap has key {
+        coin_to_fungible_asset_map: Table<TypeInfo, address>,
+    }
+
     /// The MAMU token type
     struct MAMU has key {}
 
@@ -39,10 +47,18 @@ module mamutiki::mamu {
     fun init_module(module_signer: &signer) {
         let (burn_cap, freeze_cap, mint_cap) = coin::initialize<MAMU>(
             module_signer,
-            string::utf8(MOVEMENT_NAME),
-            string::utf8(MOVEMENT_SYMBOL),
+            MOVEMENT_NAME,
+            MOVEMENT_SYMBOL,
             MOVEMENT_DECIMALS,
-            true // monitored_supply
+            MOVEMENT_MONITORED_SUPPLY
+        );
+
+        coin::set_coin_info<MAMU>(
+            MOVEMENT_NAME,
+            MOVEMENT_SYMBOL,
+            MOVEMENT_DECIMALS,
+            LOGO_URL,
+            WEBSITE_URL
         );
 
         move_to(module_signer, MovementCapabilities {

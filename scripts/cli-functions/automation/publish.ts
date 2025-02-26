@@ -30,7 +30,7 @@ type PROFILE = {
 export default async function publish() {
   try {
     // Parse config.yaml
-    const modules = ["mamutiki", "marketplace"];
+    const modules = ["mamutiki", "marketplace", "data"];
 
     const module_sources = [
       {
@@ -40,6 +40,10 @@ export default async function publish() {
       {
         name: "marketplace",
         source: "sources/marketplace",
+      },
+      {
+        name: "data",
+        source: "sources/data",
       },
     ];
 

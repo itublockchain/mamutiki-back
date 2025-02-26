@@ -3,7 +3,7 @@ module marketplace::escrow_manager {
     use std::table::{Self, Table};
     use std::account;
 
-    use mamutiki::mamu::{Self, MAMU};
+    use data::DATA::{Self};
 
     friend marketplace::contribution_manager;
 
@@ -21,9 +21,6 @@ module marketplace::escrow_manager {
     /// Automatically runs when the module is initialized
     fun init_module(account: &signer) {
         let (resource_signer, signer_cap) = account::create_resource_account(account, b"escrow_manager");
-        
-        // Register MAMU store for the marketplace account
-        mamu::safe_register(account);
 
         let store = EscrowStore {
             escrows: table::new(),
@@ -40,15 +37,14 @@ module marketplace::escrow_manager {
         store_addr: address
     ) acquires EscrowStore {
         // Check if the user has enough balance
-        assert!(mamu::get_balance(signer::address_of(account)) >= amount, ERR_NOT_ENOUGH_BALANCE);
+        assert!(DATA::get_balance(signer::address_of(account)) >= amount, ERR_NOT_ENOUGH_BALANCE);
 
         let store = borrow_global_mut<EscrowStore>(store_addr);
         let resource_signer = account::create_signer_with_capability(&store.signer_cap);
         let resource_addr = signer::address_of(&resource_signer);
 
         // Transfer the funds to marketplace account
-        mamu::check_register(&resource_signer);
-        mamu::transfer(account, resource_addr, amount);
+        DATA::transfer(account, resource_addr, amount);
 
         // Create the escrow record
         table::add(&mut store.escrows, campaign_id, amount);
@@ -71,7 +67,7 @@ module marketplace::escrow_manager {
 
         let amount = table::remove(&mut store.escrows, campaign_id);
         let resource_signer = account::create_signer_with_capability(&store.signer_cap);
-        mamu::transfer(&resource_signer, recipient, amount);
+        DATA::transfer(&resource_signer, recipient, amount);
     }
 
     /// Releases funds for data contribution
@@ -95,8 +91,8 @@ module marketplace::escrow_manager {
 
         let account_signer = account::create_signer_with_capability(&store.signer_cap);
 
-        mamu::transfer(&account_signer, recipient, amount);
-        mamu::transfer(&account_signer, @marketplace, platform_fee); 
+        DATA::transfer(&account_signer, recipient, amount);
+        DATA::transfer(&account_signer, @marketplace, platform_fee); 
     }
 
     // Displays the amount of locked funds
@@ -119,14 +115,14 @@ module marketplace::escrow_manager {
         let escrow_manager = account::create_account_for_test(@marketplace);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&escrow_manager);
+        DATA::initialize_for_test(&escrow_manager);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&escrow_manager);
+        DATA::register(&test_account);
+        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
+        DATA::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
         
         // Initialize module
         init_module(&escrow_manager);
@@ -151,15 +147,15 @@ module marketplace::escrow_manager {
         let escrow_manager = account::create_account_for_test(@marketplace);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&escrow_manager);
+        DATA::initialize_for_test(&escrow_manager);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&recipient);
-        mamu::register(&escrow_manager);
+        DATA::register(&test_account);
+        DATA::register(&recipient);
+        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
+        DATA::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
         
         // Initialize module
         init_module(&escrow_manager);
@@ -175,7 +171,7 @@ module marketplace::escrow_manager {
         release_funds(&escrow_manager, campaign_id, signer::address_of(&recipient), @marketplace);
         
         // Check balances
-        let recipient_balance = mamu::get_balance(signer::address_of(&recipient));
+        let recipient_balance = DATA::get_balance(signer::address_of(&recipient));
         assert!(recipient_balance == amount, 1);
     }
 
@@ -187,15 +183,15 @@ module marketplace::escrow_manager {
         let escrow_manager = account::create_account_for_test(@marketplace);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&escrow_manager);
+        DATA::initialize_for_test(&escrow_manager);
 
         // Register accounts for MAMU
-        mamu::register(&test_account);
-        mamu::register(&contributor);
-        mamu::register(&escrow_manager);
+        DATA::register(&test_account);
+        DATA::register(&contributor);
+        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
-        mamu::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
+        DATA::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
         
         // Initialize module
         init_module(&escrow_manager);
@@ -225,10 +221,10 @@ module marketplace::escrow_manager {
         let escrow_manager = account::create_account_for_test(@marketplace);
         
         // Initialize MAMU token
-        mamu::initialize_for_test(&escrow_manager);
+        DATA::initialize_for_test(&escrow_manager);
 
         // Register account for MAMU
-        mamu::register(&escrow_manager);
+        DATA::register(&escrow_manager);
         
         // Initialize module
         init_module(&escrow_manager);
