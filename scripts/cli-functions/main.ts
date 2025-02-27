@@ -29,15 +29,27 @@ export default async function main() {
           value: "Get last created campaign",
         },
         new inquirer.Separator(),
-        { name: chalk.magenta("Mint token"), value: "Mint token" },
+        { name: chalk.yellowBright("Publish"), value: "Publish" },
+        new inquirer.Separator(),
+        { name: chalk.magenta(" Mint token"), value: "Mint token" },
         { name: chalk.magenta("Transfer token"), value: "Transfer token" },
         { name: chalk.magenta("Faucet"), value: "Faucet" },
         new inquirer.Separator(),
-        { name: "Register", value: "Register" },
+        {
+          name: chalk.cyanBright("Set platform fee"),
+          value: "Set platform fee",
+        },
+        {
+          name: chalk.cyan("Set subscriber platform fee"),
+          value: "Set subscriber platform fee",
+        },
+        {
+          name: chalk.cyan("Set platform fee divisor"),
+          value: "Set platform fee divisor",
+        },
+        new inquirer.Separator(),
         { name: "Subscribe", value: "Subscribe" },
         { name: "Update price", value: "Update price" },
-        new inquirer.Separator(),
-        { name: chalk.yellowBright("Publish"), value: "Publish" },
         new inquirer.Separator(),
         { name: chalk.gray("Help"), value: "Help" },
         { name: chalk.red("Exit"), value: "Exit" },
@@ -76,9 +88,6 @@ export default async function main() {
     case "Faucet":
       await cli.faucet();
       break;
-    case "Register":
-      await cli.register();
-      break;
     case "Subscribe":
       await cli.subscribe();
       break;
@@ -87,6 +96,15 @@ export default async function main() {
       break;
     case "Publish":
       await cli.publish();
+      break;
+    case "Set platform fee":
+      await cli.setPlatformFee();
+      break;
+    case "Set platform fee divisor":
+      await cli.setPlatformFeeDivisor();
+      break;
+    case "Set subscriber platform fee":
+      await cli.setSubscriberPlatformFee();
       break;
     case "Help":
       await cli.help();

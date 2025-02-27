@@ -1,7 +1,7 @@
 import BaseManager from "./BaseManager";
 import { Account, Ed25519PrivateKey, Ed25519Account } from "@aptos-labs/ts-sdk";
 import CONFIG from "../utils/config";
-import { AccountBalance, Campaign } from "../types";
+import { AccountBalance } from "../types";
 import AptosUtils from "../utils/AptosUtils";
 
 // Account Manager

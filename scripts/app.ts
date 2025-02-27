@@ -5,14 +5,14 @@ dotenv.config();
 
 import cli from "./cli-functions/index";
 
-const mamutiki = new Command();
+const datagora = new Command();
 
-mamutiki.version("1.0.0");
-mamutiki.name("mamutiki");
-mamutiki.description("MAMUTIKI CLI");
+datagora.version("1.0.0");
+datagora.name("Datagora");
+datagora.description("Datagora CLI");
 
-mamutiki.command("help").action(async () => await cli.help());
+datagora.command("help").action(async () => await cli.help());
 
-mamutiki.command("start").action(async () => await cli.main());
+datagora.command("start").action(async () => await cli.main());
 
-mamutiki.parse(process.argv);
+datagora.parse(process.argv);

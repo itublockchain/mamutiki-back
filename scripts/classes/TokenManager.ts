@@ -1,6 +1,6 @@
 import BaseManager from "./BaseManager";
 import CONFIG from "../utils/config";
-import { ONE_MAMU } from "../utils/constants";
+import { ONE_TOKEN } from "../utils/constants";
 
 // Token Manager
 class TokenManager extends BaseManager {
@@ -13,22 +13,9 @@ class TokenManager extends BaseManager {
 
     const txn = await this.executeTransaction({
       type: "entry_function_payload",
-      function: `${this.moduleAddress}::mamu::mint`,
+      function: `${this.moduleAddress}::DATA::mint`,
       type_arguments: [],
-      arguments: [amount * ONE_MAMU],
-    });
-
-    return txn;
-  }
-
-  async register(): Promise<string> {
-    if (!this.account) throw new Error("Account not set");
-
-    const txn = await this.executeTransaction({
-      type: "entry_function_payload",
-      function: `${this.moduleAddress}::mamu::register`,
-      type_arguments: [],
-      arguments: [],
+      arguments: [amount * ONE_TOKEN],
     });
 
     return txn;
@@ -40,31 +27,19 @@ class TokenManager extends BaseManager {
 
       const txn = await this.executeTransaction({
         type: "entry_function_payload",
-        function: `${this.moduleAddress}::mamu::transfer`,
+        function: `${this.moduleAddress}::DATA::transfer`,
         type_arguments: [],
-        arguments: [recipient, amount * ONE_MAMU],
+        arguments: [recipient, amount * ONE_TOKEN],
       });
 
       return txn;
     } catch (error) {
       console.error(
-        "AccountManager - Token transferlenirken bir hata oluştu:",
+        "AccountManager - Error while transferring token:",
         error
       );
       throw error;
     }
-  }
-
-  async isRegistered(address: string): Promise<boolean> {
-    const resources = await this.aptos.getAccountResources({
-      accountAddress: address,
-    });
-
-    const mamuStore = resources.find(
-      (r: any) => r.type === "0x1::coin::CoinStore<0x1::mamu::MAMU>"
-    );
-
-    return mamuStore !== undefined;
   }
 
   async faucet(): Promise<string> {
@@ -72,7 +47,7 @@ class TokenManager extends BaseManager {
 
     const txn = await this.executeTransaction({
       type: "entry_function_payload",
-      function: `${this.moduleAddress}::mamu::faucet`,
+      function: `${this.moduleAddress}::DATA::faucet`,
       type_arguments: [],
       arguments: [],
     });
@@ -85,7 +60,7 @@ class TokenManager extends BaseManager {
 
     const txn = await this.executeTransaction({
       type: "entry_function_payload",
-      function: `${this.moduleAddress}::mamu::lock_faucet`,
+      function: `${this.moduleAddress}::DATA::lock_faucet`,
       type_arguments: [],
       arguments: [],
     });
@@ -98,7 +73,7 @@ class TokenManager extends BaseManager {
 
     const txn = await this.executeTransaction({
       type: "entry_function_payload",
-      function: `${this.moduleAddress}::mamu::unlock_faucet`,
+      function: `${this.moduleAddress}::DATA::unlock_faucet`,
       type_arguments: [],
       arguments: [],
     });

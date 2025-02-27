@@ -8,12 +8,12 @@ export default async function listCampaigns() {
     const sdk = await initSDK();
     await cli.showAccountInformation(sdk);
 
-    terminal.log("\nKampanyalar listeleniyor...");
+    terminal.log("\nListing campaigns...");
 
     const campaigns = await sdk.campaign.getAllCampaigns();
 
     if (campaigns.length === 0) {
-      terminal.log("Henüz hiç kampanya oluşturulmamış.");
+      terminal.log("No campaigns created yet.");
       return;
     }
 
@@ -24,23 +24,23 @@ export default async function listCampaigns() {
       terminal.log("Title:", campaign.title);
       terminal.log("Description:", campaign.description);
       terminal.log("Prompt:", campaign.prompt);
-      terminal.log("Reward Pool:", campaign.reward_pool / 100_000_000, "Move");
+      terminal.log("Reward Pool:", campaign.reward_pool / 100_000_000, "$DATA");
       terminal.log(
         "Remaining Reward:",
         campaign.remaining_reward / 100_000_000,
-        "Move"
+        "$DATA"
       );
-      terminal.log("Unit Price:", campaign.unit_price / 100_000_000, "Move");
+      terminal.log("Unit Price:", campaign.unit_price / 100_000_000, "$DATA");
       terminal.log(
         "Minimum Contribution:",
         campaign.minimum_contribution / 100_000_000,
-        "Move"
+        "$DATA"
       );
       terminal.log("Active:", campaign.active);
       terminal.log("----------------------------------------");
     });
   } catch (error) {
-    console.error("Kampanyalar listelenirken bir hata oluştu:", error);
+    console.error("Error while listing campaigns:", error);
     throw error;
   }
 }

@@ -3,14 +3,14 @@ module marketplace::subscription_manager {
     use aptos_framework::timestamp;
     use std::table::{Self, Table};
 
-    use mamutiki::mamu::{Self, MAMU};
+    use data::DATA::{Self};
 
     #[test_only]
     use aptos_framework::account;
 
     /// Structure that holds the subscription price
     struct SubscriptionPrice has key {
-        price: u64 // Price in MAMU tokens
+        price: u64 // Price in tokens
     }
 
     /// Structure that holds subscriptions
@@ -24,12 +24,11 @@ module marketplace::subscription_manager {
     const EINVALID_PRICE: u64 = 3;
     const EACTIVE_SUBSCRIPTION_EXISTS: u64 = 4;
 
-    /// Initial price (10 MAMU = 1_000_000_000 octa)
+    /// Initial price (10 Token = 1_000_000_000 octa)
     const INITIAL_PRICE: u64 = 100_000_000;
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
     fun init_module(creator: &signer) {
-        mamu::safe_register(creator);
         
         // Set initial price
         move_to(creator, SubscriptionPrice {
@@ -63,11 +62,9 @@ module marketplace::subscription_manager {
             let end_time = table::borrow(&subscriptions.subscriptions, subscriber_addr);
             assert!(current_time > *end_time, EACTIVE_SUBSCRIPTION_EXISTS);
         };
-
-        mamu::safe_register(subscriber);
         
         // Process payment directly to marketplace address
-        mamu::transfer(subscriber, @marketplace, price);
+        DATA::transfer(subscriber, @marketplace, price);
 
         // Set subscription duration
         let end_time = timestamp::now_seconds() + SUBSCRIPTION_DURATION;
@@ -117,15 +114,10 @@ module marketplace::subscription_manager {
         // Initialize timestamp
         timestamp::set_time_has_started_for_testing(framework);
 
-        // Initialize MAMU token
-        MAMU::initialize_for_test(creator);
+        DATA::initialize_for_test(creator);
 
-        // Register accounts for MAMU
-        MAMU::register(creator);
-        MAMU::register(subscriber);
-
-        // Give test tokens to subscriber (100 MAMU)
-        MAMU::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
+        // Give test tokens to subscriber (100 Token)
+        DATA::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
 
         // Initialize subscription module
         init_module(creator);

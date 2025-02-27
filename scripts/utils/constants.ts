@@ -13,7 +13,7 @@ export const DEFAULT_VALUES = {
   contribution: {
     dataCount: 1,
     storeCid: "test",
-    score: 99,
+    score: 100,
     keyForDecryption: "test",
   },
   subscription: {
@@ -21,4 +21,4 @@ export const DEFAULT_VALUES = {
   },
 };
 
-export const ONE_MAMU = 1000000;
+export const ONE_TOKEN = 1000000;

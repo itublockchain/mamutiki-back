@@ -20,14 +20,14 @@ export default async function addTrustedKey() {
 
     await cli.showAccountInformation(sdk);
 
-    terminal.log("\nGüvenilir anahtar ekleniyor...");
+    terminal.log("\nAdding trusted key...");
     terminal.log("Public Key:", publicKey);
 
     const txn = await sdk.contribution.addTrustedKey(publicKey);
-    terminal.write("\nGüvenilir anahtar başarıyla eklendi!");
+    terminal.write("\nTrusted key added successfully!");
     terminal.write("Transaction Hash:", txn);
   } catch (error) {
-    terminal.write("Güvenilir anahtar eklenirken bir hata oluştu!");
+    terminal.write("Error while adding trusted key!");
     terminal.error(error);
 
     if (isTest) throw error;

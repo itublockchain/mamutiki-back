@@ -28,7 +28,7 @@ export default async function addContribution() {
     const { dataCount, storeCid, score, keyForDecryption } =
       DEFAULT_VALUES.contribution;
 
-    // Katkı verilerini imzala
+    // Sign contribution data
     const signature = dataSigner.signContributionData(
       sdk._account.accountAddress.toString(),
       campaignId,
@@ -38,7 +38,7 @@ export default async function addContribution() {
       keyForDecryption
     );
 
-    terminal.log("\nKatkı ekleniyor...");
+    terminal.log("\nAdding contribution...");
     terminal.log("Sender:", sdk._account.accountAddress);
     terminal.log("Campaign ID:", campaignId);
     terminal.log("Data Count:", dataCount);
@@ -55,10 +55,13 @@ export default async function addContribution() {
       keyForDecryption,
       signature
     );
-    terminal.log("\nKatkı başarıyla eklendi!");
+    terminal.log("\nContribution added!");
     terminal.log("Transaction Hash:", txn);
   } catch (error) {
-    console.error("Katkı eklenirken bir hata oluştu:", error);
+    console.error(
+      "An unexpected error happened while trying to add contribution:",
+      error
+    );
     throw error;
   }
 }

@@ -30,7 +30,7 @@ type PROFILE = {
 export default async function publish() {
   try {
     // Parse config.yaml
-    const modules = ["mamutiki", "marketplace"];
+    const modules = ["mamutiki", "marketplace", "data"];
 
     const module_sources = [
       {
@@ -40,6 +40,10 @@ export default async function publish() {
       {
         name: "marketplace",
         source: "sources/marketplace",
+      },
+      {
+        name: "data",
+        source: "sources/data",
       },
     ];
 
@@ -87,7 +91,7 @@ export default async function publish() {
     const command = `movement move publish --package-dir ${module_source} --url ${selected_profile.profile.rest_url}`;
 
     console.log(
-      `Komut Çalıştırılıyor...\nKomut: ${chalk.yellow(
+      `Command is being executed...\nCommand: ${chalk.yellow(
         `${command} --private-key ...`
       )}`
     );
@@ -99,7 +103,7 @@ export default async function publish() {
 
     console.log(output);
   } catch (error: any) {
-    console.error("Publishlenirken bir hata oluştu:");
+    console.error("Error while publishing:");
     if (error) if (error.stdout) console.error(error.stdout);
   }
 }
