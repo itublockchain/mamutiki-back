@@ -20,7 +20,7 @@ export default async function addTrustedKey() {
     await cli.showAccountInformation(sdk);
 
     const campaignId = parseInt(input_campaignID);
-    terminal.log(`\nAdding (Campaign #${campaignId}) contributions...`);
+    terminal.log(`\nAdding contributions to (Campaign #${campaignId})...`);
 
     const contributions = await sdk.contribution.getCampaignContributions(
       campaignId
@@ -32,7 +32,7 @@ export default async function addTrustedKey() {
     }
 
     contributions.forEach((contribution, index) => {
-      terminal.log(`\nKatkı #${index + 1}:`);
+      terminal.log(`\nContribution #${index + 1}:`);
       terminal.log("Campaign ID:", contribution.campaign_id);
       terminal.log("Contributor:", contribution.contributor);
       terminal.log("Data Count:", contribution.data_count);
@@ -41,7 +41,7 @@ export default async function addTrustedKey() {
       terminal.log("----------------------------------------");
     });
   } catch (error) {
-    console.error("Katkılar listelenirken bir hata oluştu:", error);
+    console.error("Error while listing contributions:", error);
     throw error;
   }
 }

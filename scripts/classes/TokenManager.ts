@@ -35,7 +35,7 @@ class TokenManager extends BaseManager {
       return txn;
     } catch (error) {
       console.error(
-        "AccountManager - Token transferlenirken bir hata oluştu:",
+        "AccountManager - Error while transferring token:",
         error
       );
       throw error;

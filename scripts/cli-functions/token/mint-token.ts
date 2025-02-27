@@ -2,7 +2,6 @@ import { tokenSDK } from "../../utils/init-token-sdk";
 import terminal from "../../utils/console";
 
 import inquirer from "inquirer";
-import cli from "../";
 
 export default async function mintToken() {
   try {
@@ -20,10 +19,10 @@ export default async function mintToken() {
     const amount = parseInt(input_amount);
 
     const txn_mint = await token.mint(amount);
-    terminal.log("Token mintleniyor...");
+    terminal.log("Token is being minted...");
     terminal.log("Transaction Hash Mint:", txn_mint);
   } catch (error) {
-    console.error("Token mintlenirken bir hata oluştu:", error);
+    console.error("Error while minting token:", error);
     throw error;
   }
 }

@@ -2,7 +2,6 @@ import { tokenSDK } from "../../utils/init-token-sdk";
 import terminal from "../../utils/console";
 
 import inquirer from "inquirer";
-import cli from "../";
 
 export default async function mintToken() {
   try {
@@ -35,9 +34,9 @@ export default async function mintToken() {
         break;
     }
 
-    terminal.log("Faucet işlemi başarıyla tamamlandı.");
+    terminal.log("Faucet operation completed successfully.");
   } catch (error) {
-    console.error("Faucet işlemi sırasında bir hata oluştu:", error);
+    console.error("Error while performing faucet operation:", error);
     throw error;
   }
 }

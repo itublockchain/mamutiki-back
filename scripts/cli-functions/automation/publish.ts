@@ -91,7 +91,7 @@ export default async function publish() {
     const command = `movement move publish --package-dir ${module_source} --url ${selected_profile.profile.rest_url}`;
 
     console.log(
-      `Komut Çalıştırılıyor...\nKomut: ${chalk.yellow(
+      `Command is being executed...\nCommand: ${chalk.yellow(
         `${command} --private-key ...`
       )}`
     );
@@ -103,7 +103,7 @@ export default async function publish() {
 
     console.log(output);
   } catch (error: any) {
-    console.error("Publishlenirken bir hata oluştu:");
+    console.error("Error while publishing:");
     if (error) if (error.stdout) console.error(error.stdout);
   }
 }

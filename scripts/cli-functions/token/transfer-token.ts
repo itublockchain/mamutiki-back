@@ -2,7 +2,6 @@ import { tokenSDK } from "../../utils/init-token-sdk";
 import terminal from "../../utils/console";
 
 import inquirer from "inquirer";
-import cli from "../";
 
 export default async function transferToken() {
   try {
@@ -26,11 +25,11 @@ export default async function transferToken() {
     const recipient = String(input_recipient);
 
     const txn_transfer = await token.transferToken(amount, recipient);
-    terminal.log("Token transferleniyor...");
+    terminal.log("Token is being transferred...");
 
     terminal.log("Transaction Hash Transfer:", txn_transfer);
   } catch (error) {
-    console.error("Token transferlenirken bir hata oluştu:", error);
+    console.error("Error while transferring token:", error);
     throw error;
   }
 }

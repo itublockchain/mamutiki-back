@@ -11,7 +11,7 @@ export default async function updatePrice() {
     const priceInOcta = newPrice * 10 ** 6;
 
     terminal.log(
-      `\nFiyat güncelleniyor: ${newPrice} DATA (${priceInOcta} Octa)`
+      `\nUpdating price: ${newPrice} DATA (${priceInOcta} Octa)`
     );
     const txn = await sdk.subscription.updatePrice(priceInOcta);
 
