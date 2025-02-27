@@ -311,13 +311,7 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&campaign_manager_account);
-
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&campaign_manager_account);
-        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&campaign_manager_account, signer::address_of(&test_account), 1000_000_000_000);
@@ -365,12 +359,7 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize MAMU token
-        DATA::initialize_for_test(&campaign_manager);
-
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&campaign_manager);
+        DATA::initialize_for_test(&campaign_manager)
 
         // Give test tokens to test account
         DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
@@ -433,12 +422,7 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&campaign_manager);
-
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&campaign_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);
@@ -498,12 +482,7 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&campaign_manager);
-
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&campaign_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);

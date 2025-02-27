@@ -196,12 +196,8 @@ module marketplace::escrow_manager {
         let test_account = account::create_account_for_test(@0x1);
         let escrow_manager = account::create_account_for_test(@marketplace);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&escrow_manager);
 
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
@@ -228,13 +224,7 @@ module marketplace::escrow_manager {
         let recipient = account::create_account_for_test(@0x2);
         let escrow_manager = account::create_account_for_test(@marketplace);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&escrow_manager);
-
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&recipient);
-        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
@@ -264,13 +254,7 @@ module marketplace::escrow_manager {
         let contributor = account::create_account_for_test(@0x2);
         let escrow_manager = account::create_account_for_test(@marketplace);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&escrow_manager);
-
-        // Register accounts for MAMU
-        DATA::register(&test_account);
-        DATA::register(&contributor);
-        DATA::register(&escrow_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&escrow_manager, signer::address_of(&test_account), 10000);
@@ -302,11 +286,7 @@ module marketplace::escrow_manager {
         // Create test account
         let escrow_manager = account::create_account_for_test(@marketplace);
         
-        // Initialize MAMU token
         DATA::initialize_for_test(&escrow_manager);
-
-        // Register account for MAMU
-        DATA::register(&escrow_manager);
         
         // Initialize module
         init_module(&escrow_manager);

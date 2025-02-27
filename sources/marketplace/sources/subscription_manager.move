@@ -10,7 +10,7 @@ module marketplace::subscription_manager {
 
     /// Structure that holds the subscription price
     struct SubscriptionPrice has key {
-        price: u64 // Price in MAMU tokens
+        price: u64 // Price in tokens
     }
 
     /// Structure that holds subscriptions
@@ -24,7 +24,7 @@ module marketplace::subscription_manager {
     const EINVALID_PRICE: u64 = 3;
     const EACTIVE_SUBSCRIPTION_EXISTS: u64 = 4;
 
-    /// Initial price (10 MAMU = 1_000_000_000 octa)
+    /// Initial price (10 Token = 1_000_000_000 octa)
     const INITIAL_PRICE: u64 = 100_000_000;
     const SUBSCRIPTION_DURATION: u64 = 2592000; // 30 days (in seconds)
 
@@ -114,14 +114,9 @@ module marketplace::subscription_manager {
         // Initialize timestamp
         timestamp::set_time_has_started_for_testing(framework);
 
-        // Initialize MAMU token
         DATA::initialize_for_test(creator);
 
-        // Register accounts for MAMU
-        DATA::register(creator);
-        DATA::register(subscriber);
-
-        // Give test tokens to subscriber (100 MAMU)
+        // Give test tokens to subscriber (100 Token)
         DATA::mint_to(creator, signer::address_of(subscriber), 100_000_000_000);
 
         // Initialize subscription module
