@@ -20,14 +20,14 @@ export default async function addTrustedKey() {
     await cli.showAccountInformation(sdk);
 
     const campaignId = parseInt(input_campaignID);
-    terminal.log(`\nKampanya #${campaignId} katkıları listeleniyor...`);
+    terminal.log(`\nAdding (Campaign #${campaignId}) contributions...`);
 
     const contributions = await sdk.contribution.getCampaignContributions(
       campaignId
     );
 
     if (contributions.length === 0) {
-      terminal.log("Bu kampanyaya henüz katkı yapılmamış.");
+      terminal.log("No contributions have been made to this campaign yet.");
       return;
     }
 

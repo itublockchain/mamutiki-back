@@ -4,6 +4,7 @@ module marketplace::escrow_manager {
     use std::account;
 
     use data::DATA::{Self};
+    use marketplace::subscription_manager;
 
     friend marketplace::contribution_manager;
 
@@ -13,10 +14,25 @@ module marketplace::escrow_manager {
         signer_cap: account::SignerCapability,
     }
 
+    struct PlatformStore has key {
+        platform_fee: u64,
+        platform_fee_for_subscribers: u64,
+        platform_fee_divisor: u64,
+    }
+
+    const STANDARD_FEE: u64 = 20; // 2%
+    const STANDARD_SUBSCRIBER_FEE: u64 = 5; // 0.5%
+    const STANDARD_FEE_DIVISOR: u64 = 1000;
+
     /// Error codes
     const ERR_NOT_ENOUGH_BALANCE: u64 = 1;
     const ERR_ESCROW_NOT_FOUND: u64 = 2;
     const ERR_UNAUTHORIZED: u64 = 3;
+
+    const MIN_FEE_EXCEED: u64 = 1000;
+    const MAX_FEE_EXCEED: u64 = 1001;
+
+    const MIN_DIVISOR_EXCEED: u64 = 2000;
 
     /// Automatically runs when the module is initialized
     fun init_module(account: &signer) {
@@ -26,9 +42,63 @@ module marketplace::escrow_manager {
             escrows: table::new(),
             signer_cap,
         };
+
+        let platform_store = PlatformStore {
+            platform_fee: STANDARD_FEE,
+            platform_fee_for_subscribers: STANDARD_SUBSCRIBER_FEE,
+            platform_fee_divisor: STANDARD_FEE_DIVISOR,
+        };
+
+        move_to(account, platform_store);
         move_to(account, store);
     }
 
+    public entry fun set_platform_fee(admin: &signer, new_fee: u64) acquires PlatformStore {
+        assert!(signer::address_of(admin) == @marketplace, ERR_UNAUTHORIZED);
+        assert!(new_fee >= 0, MIN_FEE_EXCEED);
+
+        let store = borrow_global_mut<PlatformStore>(@marketplace);
+        assert!(new_fee <= store.platform_fee_divisor, MAX_FEE_EXCEED);
+
+        store.platform_fee = new_fee;
+    }
+
+    public entry fun set_subscriber_platform_fee(admin: &signer, new_fee: u64) acquires PlatformStore {
+        assert!(signer::address_of(admin) == @marketplace, ERR_UNAUTHORIZED);
+        assert!(new_fee >= 0, MIN_FEE_EXCEED);
+        
+        let store = borrow_global_mut<PlatformStore>(@marketplace);
+        assert!(new_fee <= store.platform_fee_divisor, MAX_FEE_EXCEED);
+
+        store.platform_fee_for_subscribers = new_fee;
+    } 
+
+    public entry fun set_platform_fee_divisor(admin: &signer, new_divisor: u64) acquires PlatformStore {
+        assert!(signer::address_of(admin) == @marketplace, ERR_UNAUTHORIZED);
+        assert!(new_divisor >= 0, MIN_DIVISOR_EXCEED);
+
+        let store = borrow_global_mut<PlatformStore>(@marketplace);
+        store.platform_fee_divisor = new_divisor;
+    } 
+
+    #[view]
+    public fun get_platform_fee(): u64 acquires PlatformStore {
+        let platform_store = borrow_global<PlatformStore>(@marketplace);
+        platform_store.platform_fee
+    }
+
+    #[view]
+    public fun get_platform_fee_for_subscribers(): u64 acquires PlatformStore {
+        let platform_store = borrow_global<PlatformStore>(@marketplace);
+        platform_store.platform_fee_for_subscribers
+    }
+
+    #[view]
+    public fun get_platform_fee_divisor(): u64 acquires PlatformStore {
+        let platform_store = borrow_global<PlatformStore>(@marketplace);
+        platform_store.platform_fee_divisor
+    }   
+    
     /// Locks funds for a specific campaign
     public fun lock_funds(
         account: &signer,
@@ -75,14 +145,26 @@ module marketplace::escrow_manager {
         campaign_id: u64,
         recipient: address,
         amount: u64
-    ) acquires EscrowStore {
+    ) acquires EscrowStore, PlatformStore {
         let store = borrow_global_mut<EscrowStore>(@marketplace);
-        
+        let platform_store = borrow_global_mut<PlatformStore>(@marketplace);
+
         assert!(table::contains(&store.escrows, campaign_id), ERR_ESCROW_NOT_FOUND);
 
         let locked_amount = *table::borrow(&store.escrows, campaign_id);
 
-        let platform_fee = (amount * 2) / 100;
+        let (subscription_status, subscription_end) = subscription_manager::check_subscription(recipient);
+
+        let fee_factor: u64;
+
+        if (subscription_status && (subscription_end > 0)){
+            fee_factor = platform_store.platform_fee_for_subscribers;
+        } else {
+            fee_factor = platform_store.platform_fee;
+        };
+
+        let platform_fee = (amount * fee_factor) / platform_store.platform_fee_divisor;
+        
         let total_deduction = amount + platform_fee;
         assert!(locked_amount >= total_deduction, ERR_NOT_ENOUGH_BALANCE);
 

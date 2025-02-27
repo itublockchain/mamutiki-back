@@ -8,28 +8,30 @@ export default async function subscribe() {
     const sdk = await initSDK();
     await cli.showAccountInformation(sdk);
 
-    terminal.log("\nAbonelik işlemi başlatılıyor...");
+    terminal.log("\nSubscription process has started...");
     const txn = await sdk.subscription.subscribe();
 
-    terminal.log("\n✅ Abonelik başarıyla oluşturuldu!");
+    terminal.log("\n✅ Subscription succesfully has been done!");
     terminal.log("Transaction Hash:", txn);
 
-    // Abonelik durumunu kontrol et
+    // Check subscription state
     const [isActive, remainingTime] = await sdk.subscription.checkSubscription(
       sdk._account.accountAddress.toString()
     );
     if (isActive) {
-      terminal.log(`\nAbonelik Durumu: Aktif`);
+      terminal.log(`\nSubscription State: Active`);
       terminal.log(
-        `Kalan Süre: ${Math.floor(remainingTime / 86400)} gün ${Math.floor(
+        `Remaining: ${Math.floor(remainingTime / 86400)} day ${Math.floor(
           (remainingTime % 86400) / 3600
-        )} saat`
+        )} hour.`
       );
     }
   } catch (error: any) {
-    console.error("\n❌ Abonelik oluşturulurken bir hata oluştu:");
+    console.error(
+      "\n❌ An unexpected error happened while trying to subscribe:"
+    );
     if (error.message) {
-      console.error("Hata mesajı:", error.message);
+      console.error("Error message:", error.message);
     } else {
       console.error(error);
     }

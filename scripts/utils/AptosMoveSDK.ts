@@ -7,6 +7,7 @@ import CampaignManager from "../classes/CampaignManager";
 import ContributionManager from "../classes/ContributionManager";
 import SubscriptionManager from "../classes/SubscriptionManager";
 import TokenManager from "../classes/TokenManager";
+import EscrowManager from "../classes/EscrowManager";
 
 // Main SDK Class
 class AptosMoveSDK {
@@ -14,12 +15,13 @@ class AptosMoveSDK {
   readonly campaign: CampaignManager;
   readonly contribution: ContributionManager;
   readonly subscription: SubscriptionManager;
-
+  readonly escrow: EscrowManager;
   constructor(moduleAddress: string = CONFIG.MODULE_ADDRESS) {
     this.account = new AccountManager(moduleAddress);
     this.campaign = new CampaignManager(moduleAddress);
     this.contribution = new ContributionManager(moduleAddress);
     this.subscription = new SubscriptionManager(moduleAddress);
+    this.escrow = new EscrowManager(moduleAddress);
   }
 
   setAccount(privateKeyHex?: string): Ed25519Account {
@@ -31,6 +33,7 @@ class AptosMoveSDK {
     this.campaign.setAccount(account);
     this.contribution.setAccount(account);
     this.subscription.setAccount(account);
+    this.escrow.setAccount(account);
     return account;
   }
 }

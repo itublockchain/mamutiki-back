@@ -14,6 +14,9 @@ import publish from "./automation/publish";
 import faucet from "./token/faucet";
 import getAllActiveCampaigns from "./campaigns/get_all_active_campaigns";
 import lastCreatedCampaign from "./campaigns/last_created_campaign";
+import setPlatformFee from "./escrow-functions/set-platform-fee";
+import setPlatformFeeDivisor from "./escrow-functions/set-platform-fee-divisor";
+import setSubscriberPlatformFee from "./escrow-functions/set-subscriber-platform-fee";
 
 export default {
   addTrustedKey,
@@ -32,4 +35,7 @@ export default {
   faucet,
   getAllActiveCampaigns,
   lastCreatedCampaign,
+  setPlatformFee,
+  setPlatformFeeDivisor,
+  setSubscriberPlatformFee,
 };

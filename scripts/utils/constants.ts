@@ -13,7 +13,7 @@ export const DEFAULT_VALUES = {
   contribution: {
     dataCount: 1,
     storeCid: "test",
-    score: 99,
+    score: 100,
     keyForDecryption: "test",
   },
   subscription: {

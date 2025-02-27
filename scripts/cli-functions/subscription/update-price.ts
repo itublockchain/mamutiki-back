@@ -2,7 +2,6 @@ import { initSDK } from "../../utils/init-sdk";
 import terminal from "../../utils/console";
 
 import { DEFAULT_VALUES } from "../../utils/constants";
-import cli from "../";
 
 export default async function updatePrice() {
   try {
@@ -12,18 +11,21 @@ export default async function updatePrice() {
     const priceInOcta = newPrice * 10 ** 6;
 
     terminal.log(
-      `\nFiyat güncelleniyor: ${newPrice} APT (${priceInOcta} Octa)`
+      `\nFiyat güncelleniyor: ${newPrice} DATA (${priceInOcta} Octa)`
     );
     const txn = await sdk.subscription.updatePrice(priceInOcta);
 
-    terminal.log("\n✅ Abonelik fiyatı başarıyla güncellendi!");
+    terminal.write(
+      `\n✅ Subscription price has been succesfully updated! (${newPrice} DATA)`
+    );
     terminal.log("Transaction Hash:", txn);
   } catch (error: any) {
-    console.error("\n❌ Fiyat güncellenirken bir hata oluştu:");
+    terminal.error("\n❌ An unexpected error happened at update-price.ts:");
+
     if (error.message) {
-      console.error("Hata mesajı:", error.message);
+      terminal.error("Error message:", error.message);
     } else {
-      console.error(error);
+      terminal.error(error);
     }
     throw error;
   }
