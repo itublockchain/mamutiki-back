@@ -1,4 +1,13 @@
-# How to run the Datagora backend project:
+![datagora](./project_images/datagora_banner.png)
+
+# Getting Started
+
+<p><b>Datagora</b> is a cutting-edge decentralized application (dApp) on the Movement Network, utilizing the <b>$DATA</b> token for efficient data exchanges. The name "<b>Datagora</b>" marries "Data" from English with "Agora," the ancient Greek term for a marketplace. It provides a powerful platform for researchers, companies, and independent developers—known as "<b>campaign creators</b>"—to launch data collection campaigns specifically for <b>AI training.</b> Whether the need is for health metrics, shopping receipts, or browsing behaviors, creators can specify data requirements and set quality standards. Participants contributing their data earn <b>$DATA</b> tokens, promoting a dynamic ecosystem. <b>Datagora</b> emphasizes data authenticity, privacy, and applies rigorous verification to ensure high-quality data, building trust among creators and contributors alike.</p>
+
+- ### Documents: [Datagora Docs](https://docs.datagora.xyz/)
+- ### Live Demo: [datagora.xyz](https://datagora.xyz/)
+
+## How to run the Datagora backend project:
 
 1. Install dependencies: `npm install`
 2. Install Movement CLI: [Official Movement CLI Setup Guide](https://docs.movementnetwork.xyz/devs/movementcli)
@@ -11,7 +20,7 @@
      - select network as "custom" and then press enter.
      - after that, movement cli will request rest url, write the url which you want to use.
        we recommend using bardock testnet for testing. `https://aptos.testnet.bardock.movementlabs.xyz/v1`
-     - then you will get private key, public key, account address in both .movement folder, please change network from "Custom" to "Testnet".
+     - then you will get private key, public key, account address in both .movement folder, please rename network from "Custom" to "Testnet".
 
      ***
 
