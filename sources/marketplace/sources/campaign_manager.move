@@ -67,6 +67,9 @@ module marketplace::campaign_manager {
     const ERR_EXCEED_MAX_SCORE: u64 = 10;
 
     const MAX_SCORE: u64 = 100;
+    
+    const ERR_CAMPAIGN_NOT_ACTIVE: u64 = 3001;
+    const ERR_NOT_CAMPAIGN_CREATOR: u64 = 3002;
 
     /// When the module is initialized, it runs automatically
     fun init_module(account: &signer) {
@@ -162,6 +165,20 @@ module marketplace::campaign_manager {
         });
     }
 
+    public entry fun close_campaign_by_id(account: &signer, campaign_id: u64) acquires CampaignStore {
+        let store = borrow_global_mut<CampaignStore>(@marketplace);
+
+        assert!(table::contains(&store.campaigns, campaign_id), ERR_NO_CAMPAIGN);
+        assert!(table::borrow(&store.campaigns, campaign_id).active, ERR_CAMPAIGN_NOT_ACTIVE);
+        assert!(signer::address_of(account) == table::borrow(&store.campaigns, campaign_id).creator, ERR_NOT_CAMPAIGN_CREATOR);
+
+        let campaign = table::borrow_mut(&mut store.campaigns, campaign_id);
+        campaign.active = false;
+
+        // Unlock the funds in the escrow
+        marketplace::escrow_manager::release_funds(@marketplace, campaign_id, signer::address_of(account), @marketplace);
+    }
+
     #[view]
     public fun last_created_campaign(creator: address): Campaign acquires CampaignStore {
         // Get all campaigns by the creator
@@ -205,7 +222,11 @@ module marketplace::campaign_manager {
         let campaign = *table::borrow(&store_ref.campaigns, campaign_id);
         
         // Get the remaining amount in the escrow
-        campaign.remaining_reward = marketplace::escrow_manager::get_locked_amount(campaign_id, @marketplace);
+        if(campaign.active){
+            campaign.remaining_reward = marketplace::escrow_manager::get_locked_amount(campaign_id, @marketplace);
+        } else {
+            campaign.remaining_reward = 0;
+        };
         campaign
     }
 
@@ -219,7 +240,12 @@ module marketplace::campaign_manager {
             if (table::contains(&store.campaigns, i)) {
                 let camp = *table::borrow(&store.campaigns, i);
                 // For each campaign, get the remaining amount in the escrow
-                camp.remaining_reward = marketplace::escrow_manager::get_locked_amount(i, @marketplace);
+                if(camp.active){
+                    camp.remaining_reward = marketplace::escrow_manager::get_locked_amount(i, @marketplace);
+                } else {
+                    camp.remaining_reward = 0;
+                };
+                
                 vector::push_back(&mut campaigns, camp);
             };
             i = i + 1;
@@ -359,7 +385,7 @@ module marketplace::campaign_manager {
         // Initialize timestamp for testing
         timestamp::set_time_has_started_for_testing(&framework_signer);
         
-        DATA::initialize_for_test(&campaign_manager)
+        DATA::initialize_for_test(&campaign_manager);
 
         // Give test tokens to test account
         DATA::mint_to(&campaign_manager, signer::address_of(&test_account), 1000_000_000_000);

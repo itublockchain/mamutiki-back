@@ -82,6 +82,21 @@ class CampaignManager extends BaseManager {
     }
   }
 
+  async closeCampaignById(campaignId: number): Promise<[Campaign, string]> {
+    try {
+      const payload = AptosUtils.createEntryPayload(
+        `${this.moduleAddress}::campaign_manager::close_campaign_by_id`,
+        [campaignId.toString()]
+      );
+
+      const tx = await this.executeTransaction(payload);
+      return [(await this.getCampaign(campaignId)) as Campaign, tx];
+    } catch (error) {
+      terminal.error(error);
+      throw error;
+    }
+  }
+
   private parseCampaignResponse(response: any): Campaign {
     return {
       id: Number(response.id),

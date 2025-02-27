@@ -17,7 +17,7 @@ import lastCreatedCampaign from "./campaigns/last_created_campaign";
 import setPlatformFee from "./escrow-functions/set-platform-fee";
 import setPlatformFeeDivisor from "./escrow-functions/set-platform-fee-divisor";
 import setSubscriberPlatformFee from "./escrow-functions/set-subscriber-platform-fee";
-
+import closeCampaignById from "./campaigns/close-campaign-by-id";
 export default {
   addTrustedKey,
   createCampaign,
@@ -38,4 +38,5 @@ export default {
   setPlatformFee,
   setPlatformFeeDivisor,
   setSubscriberPlatformFee,
+  closeCampaignById,
 };
