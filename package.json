@@ -1,20 +1,14 @@
 {
-  "name": "mamutiki",
-  "version": "1.0.0",
-  "description": "Campaign Manager Move modülü için TypeScript istemcisi",
+  "name": "datagora-cli",
+  "version": "1.2.0",
+  "description": "A CLI Tool for managing and interacting with Move contracts for the Datagora project.",
   "main": "scripts/app.ts",
   "bin": {
-    "mamutiki": "scripts/mamutiki/app.ts"
+    "datagora": "scripts/datagora/app.ts"
   },
   "scripts": {
     "start": "ts-node scripts/app.ts start",
-    "help": "ts-node scripts/app.ts help",
-    "node": "aptos node run-local-testnet --with-faucet",
-    "build": "aptos move publish --profile default",
-    "execute-project": "aptos move compile && npm run build && npm run start",
-    "publish:marketplace": "movement move publish --profile marketplace",
-    "publish:mamutiki": "movement move publish --named-addresses mamutiki=0x1 --profile mamutiki",
-    "test-ts": "ts-node scripts/test.ts"
+    "help": "ts-node scripts/app.ts help"
   },
   "dependencies": {
     "@aptos-labs/aptos-client": "^1.0.0",
