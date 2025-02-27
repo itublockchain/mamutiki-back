@@ -122,7 +122,7 @@ module marketplace::escrow_manager {
 
     /// Releases locked funds
     public fun release_funds(
-        account: &signer,
+        account: address,
         campaign_id: u64,
         recipient: address,
         store_addr: address
@@ -133,7 +133,7 @@ module marketplace::escrow_manager {
         assert!(table::contains(&store.escrows, campaign_id), ERR_ESCROW_NOT_FOUND);
         
         // Only the store owner can release the funds
-        assert!(signer::address_of(account) == store_addr, ERR_UNAUTHORIZED);
+        assert!(account == store_addr, ERR_UNAUTHORIZED);
 
         let amount = table::remove(&mut store.escrows, campaign_id);
         let resource_signer = account::create_signer_with_capability(&store.signer_cap);

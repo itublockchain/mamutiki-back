@@ -28,6 +28,10 @@ export default async function main() {
           name: chalk.blue("Get last created campaign"),
           value: "Get last created campaign",
         },
+        {
+          name: chalk.blue("Close campaign by id"),
+          value: "Close campaign by id",
+        },
         new inquirer.Separator(),
         { name: chalk.yellowBright("Publish"), value: "Publish" },
         new inquirer.Separator(),
@@ -72,6 +76,9 @@ export default async function main() {
       break;
     case "Get last created campaign":
       await cli.lastCreatedCampaign();
+      break;
+    case "Close campaign by id":
+      await cli.closeCampaignById();
       break;
     case "Add contribution":
       await cli.addContribution();
