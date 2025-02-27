@@ -126,6 +126,8 @@ module marketplace::contribution_manager {
         
         let contributor = signer::address_of(account);
 
+        campaign_manager::check_campaign_active(campaign_id);
+
         add_contributibon_check_input_validity(campaign_id,
         data_count,
         store_cid,

@@ -1,117 +1,81 @@
-# Mamutiki - Data Marketplace Move Modules
+# How to run the Datagora backend project:
 
-This documentation details the public entry and view functions in Move smart contracts for a decentralized data marketplace platform.
+1. Install dependencies: `npm install`
+2. Install Movement CLI: [Official Movement CLI Setup Guide](https://docs.movementnetwork.xyz/devs/movementcli)
+3. Initialize movement account in two separate module folder.
 
-## Table of Contents
-- [Campaign Manager](#campaign-manager)
-- [Contribution Manager](#contribution-manager)
-- [Escrow Manager](#escrow-manager)
-- [Verifier Manager](#verifier-manager)
+   - sources/data: `movement init --skip-faucet`
+   - sources/marketplace: `movement init --skip-faucet`
+   - for both, you will do the same process:
 
-## Campaign Manager
-Module where buyers can create campaigns to purchase specific types of data.
+     - select network as "custom" and then press enter.
+     - after that, movement cli will request rest url, write the url which you want to use.
+       we recommend using bardock testnet for testing. `https://aptos.testnet.bardock.movementlabs.xyz/v1`
+     - then you will get private key, public key, account address in both .movement folder, please change network from "Custom" to "Testnet".
 
-### Public Entry Functions
+     ***
 
-#### `create_campaign`
-Creates a new data collection campaign and locks the reward pool in escrow.
+   on sources/data:
 
-**Parameters:**
-- `account: &signer` - Signer of the campaign creator's account
-- `title: String` - Campaign title
-- `description: String` - Campaign description
-- `prompt: String` - Data collection prompt
-- `unit_price: u64` - Reward amount per data point
-- `minimum_contribution: u64` - Minimum contribution amount
-- `reward_pool: u64` - Total reward pool
+   - Use `movement move init --name Data` command to initialize the project.
+   - In Move.toml file, add the following to the [addresses] section:
 
-### View Functions
+     ```toml
+     [addresses]
+     data = "account_address_in_the_.movement_folder"
+     ```
 
-#### `get_campaign`
-Returns details of a specific campaign.
+   on sources/marketplace:
 
-**Parameters:**
-- `campaign_id: u64` - Campaign ID
+   - Use `movement move init --name Marketplace` command to initialize the project.
+   - In Move.toml file, add the following to the [addresses] and [dependencies] section:
 
-**Return Value:**
-```move
-Campaign {
-    id: u64,
-    creator: address,
-    title: String,
-    description: String,
-    prompt: String,
-    reward_pool: u64,
-    remaining_reward: u64,
-    unit_price: u64,
-    minimum_contribution: u64,
-    active: bool
-}
-```
+   ```toml
+    [addresses]
+    marketplace = "account_address_in_the_.movement_folder"
 
-#### `get_all_campaigns`
-Lists all campaigns in the marketplace.
+    [dependencies]
+    AptosFramework = { git = "https://github.com/aptos-labs/aptos-core.git", rev = "mainnet", subdir = "aptos-move/framework/aptos-framework"}
+    Data = {local = "../data"}
+   ```
 
-**Return Value:**
-- `vector<Campaign>` - List of all campaigns
+   Afterall your folders in sources, should look like this:
 
-## Contribution Manager
-Manages data contributions from sellers to active campaigns.
+   ![Third process](./project_images/third_process.png)
 
-### Public Entry Functions
+4. Create .env file using .env.example file:
 
-#### `add_contribution`
-Submits data contribution to a campaign and transfers the reward to the contributor.
+   - In that file you should fill it like this.
 
-**Parameters:**
-- `account: &signer` - Signer of the contributor's account
-- `campaign_id: u64` - Campaign ID
-- `data_count: u64` - Number of data points submitted
-- `store_cid: String` - IPFS CID of the data
-- `score: u64` - Quality score of the contribution
-- `signature: vector<u8>` - ED25519 signature from trusted validator
+   ```env
+   NODE_URL=https://aptos.testnet.bardock.movementlabs.xyz/v1
+   FAUCET_URL=https://fund.testnet.bardock.movementlabs.xyz/
 
-### View Functions
+   ACCOUNT_PRIVATE_KEY=(your_any_movement_account_private_key)
 
-#### `get_campaign_contributions`
-Lists all contributions for a specific campaign.
+   MODULE_PRIVATE_KEY=(marketplace_module_private_key)
+   MODULE_ADDRESS=(marketplace_module_address)
 
-**Parameters:**
-- `campaign_id: u64` - Campaign ID
+   TOKEN_MODULE_PRIVATE_KEY=(token_module_private_key)
+   TOKEN_MODULE_ADDRESS=(token_module_address)
 
-**Return Value:**
-```move
-vector<Contribution> {
-    campaign_id: u64,
-    contributor: address,
-    data_count: u64,
-    store_cid: String,
-    score: u64,
-    signature: vector<u8>
-}
-```
+   TEST=(choose true or false)
+   ```
 
-## Verifier Manager
-Manages verification of data contributions using trusted validator signatures.
+5. Use `npm start` to interact with the modules or deploy it to the network.
+   -If it works properly, you should see the following output:
 
-### Public Entry Functions
+   ![Fifth process](./project_images/fifth_process.png)
 
-#### `add_trusted_key`
-Adds a new trusted validator's public key to the system.
+6. You can use publish command to publish the module to the network.
 
-**Parameters:**
-- `account: &signer` - Signer of the marketplace creator account
-- `public_key: vector<u8>` - ED25519 public key of the trusted validator
+- We need $MOVE for both DATA and MARKETPLACE module addresses.
+- To cover this, we recommend to use "https://faucet.movementnetwork.xyz/?network=bardock"
+- Before publishing the modules you must publish the DATA module first.
+- Then, you can publish the MARKETPLACE module. Because the MARKETPLACE module belongs to DATA module and its address.
 
-## Important Notes
+## Additional Notes:
 
-1. All currency amounts are in AptosCoin.
-2. Data verification is performed by trusted validators using ED25519 signatures.
-3. The contribution signature is generated over:
-   - campaign_id
-   - data_count
-   - store_cid (IPFS Content ID)
-   - score (quality score)
-4. Data quality scores are determined by trusted validators.
-5. Only the marketplace creator can manage trusted validator keys.
-6. Data is stored in decentralized storage solutions (IPFS).
+- Marketplace module is using $DATA as its native token. So you need to have some $DATA in your account to interact with the module.
+- You can have $DATA from the $DATA faucet.
+- You must have add the "trusted public key" before initializing the create campaign function. It can be any secure account that YOU only have the access to it. We recommend using the marketplace module account for this.

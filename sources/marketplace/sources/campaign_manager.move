@@ -230,6 +230,12 @@ module marketplace::campaign_manager {
         campaign
     }
 
+    public fun check_campaign_active(campaign_id: u64) acquires CampaignStore {
+        let store = borrow_global<CampaignStore>(@marketplace);
+        let campaign = *table::borrow(&store.campaigns, campaign_id);
+        assert!(campaign.active, ERR_CAMPAIGN_NOT_ACTIVE);
+    }
+
     // Returns all campaigns in the store.
     #[view]
     public fun get_all_campaigns(): vector<Campaign> acquires CampaignStore {
