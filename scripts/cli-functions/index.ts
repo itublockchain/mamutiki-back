@@ -1,4 +1,4 @@
-import addTrustedKey from "./add-trusted-key/add-trusted-key";
+import addTrustedKey from "./trusted-key/add-trusted-key";
 import createCampaign from "./campaigns/create-campaign";
 import listCampaigns from "./campaigns/list-campaigns";
 import addContribution from "./contributions/add-contribution";
@@ -18,6 +18,8 @@ import setPlatformFee from "./escrow-functions/set-platform-fee";
 import setPlatformFeeDivisor from "./escrow-functions/set-platform-fee-divisor";
 import setSubscriberPlatformFee from "./escrow-functions/set-subscriber-platform-fee";
 import closeCampaignById from "./campaigns/close-campaign-by-id";
+import removeTrustedKey from "./trusted-key/remove-trusted-key";
+
 export default {
   addTrustedKey,
   createCampaign,
@@ -39,4 +41,5 @@ export default {
   setPlatformFeeDivisor,
   setSubscriberPlatformFee,
   closeCampaignById,
+  removeTrustedKey,
 };

@@ -14,7 +14,7 @@ module data::DATA {
     const DATA_NAME: vector<u8> = b"Data Shares";
     const DATA_SYMBOL: vector<u8> = b"DATA";
     const DATA_DECIMALS: u8 = 6;
-    const DATA_ICON: vector<u8> = b"https://www.datagora.xyz/icon_50.png";
+    const DATA_ICON: vector<u8> = b"https://datagora.xyz/token.png";
     const DATA_PROJECT_URI: vector<u8> = b"https://datagora.xyz/";
     const DATA_MAX_SUPPLY: u128 = 1000000000;
 
@@ -232,7 +232,7 @@ module data::DATA {
     ) acquires DataManagement, Faucet {
         assert!(!is_faucet_locked(), EFAUCET_LOCKED);
 
-        let _amount = 100 * math64::pow(10, (DATA_DECIMALS as u64));
+        let _amount = 5000 * math64::pow(10, (DATA_DECIMALS as u64));
         mint_for_faucet(admin, _amount);
     }
 

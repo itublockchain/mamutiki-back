@@ -11,6 +11,10 @@ export default async function main() {
       message: "What do you want to do?",
       choices: [
         { name: chalk.yellow("Add trusted key"), value: "Add trusted key" },
+        {
+          name: chalk.yellow("Remove trusted key"),
+          value: "Remove trusted key",
+        },
         new inquirer.Separator(),
         {
           name: chalk.greenBright("Create campaign"),
@@ -64,6 +68,9 @@ export default async function main() {
   switch (answer.action) {
     case "Add trusted key":
       await cli.addTrustedKey();
+      break;
+    case "Remove trusted key":
+      await cli.removeTrustedKey();
       break;
     case "Create campaign":
       await cli.createCampaign();

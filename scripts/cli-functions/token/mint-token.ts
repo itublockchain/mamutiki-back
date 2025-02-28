@@ -6,7 +6,7 @@ import inquirer from "inquirer";
 export default async function mintToken() {
   try {
     const [{ token }, { input_amount }] = await Promise.all([
-      tokenSDK(),
+      tokenSDK({ isFaucet: true }),
       inquirer.prompt([
         {
           type: "input",
