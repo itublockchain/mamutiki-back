@@ -13,6 +13,15 @@ class ContributionManager extends BaseManager {
     return this.executeTransaction(payload);
   }
 
+  async removeTrustedKey(publicKey: string): Promise<string> {
+    const payload = AptosUtils.createEntryPayload(
+      `${this.moduleAddress}::verifier::remove_trusted_key`,
+      [AptosUtils.hexToBytes(publicKey)]
+    );
+
+    return this.executeTransaction(payload);
+  }
+
   async addContribution(
     campaignId: number,
     dataCount: number,

@@ -1,7 +1,7 @@
 import { initSDK } from "../../utils/init-sdk";
 import inquirer from "inquirer";
 
-import cli from "../";
+import cli from "..";
 
 import terminal, { isTest } from "../../utils/console";
 
