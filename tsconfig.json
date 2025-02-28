@@ -7,10 +7,7 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "baseUrl": "./scripts/",
-    "paths": {
-      "mamutiki": ["node_modules/mamutiki/src"],
-      "mamutiki/*": ["node_modules/mamutiki/src/*"]
-    }
+    "paths": {}
   },
   "include": ["scripts/**/*"]
 }
