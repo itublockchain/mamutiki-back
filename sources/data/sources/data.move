@@ -14,7 +14,7 @@ module data::DATA {
     const DATA_NAME: vector<u8> = b"Data Shares";
     const DATA_SYMBOL: vector<u8> = b"DATA";
     const DATA_DECIMALS: u8 = 6;
-    const DATA_ICON: vector<u8> = b"https://datagora.xyz/icon.png";
+    const DATA_ICON: vector<u8> = b"https://www.datagora.xyz/icon_50.png";
     const DATA_PROJECT_URI: vector<u8> = b"https://datagora.xyz/";
     const DATA_MAX_SUPPLY: u128 = 1000000000;
 

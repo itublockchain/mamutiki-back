@@ -1,4 +1,4 @@
-![datagora](./project_images/datagora_banner.png)
+![datagora](./project_images/datagora_banner.jpeg)
 
 # Getting Started
 

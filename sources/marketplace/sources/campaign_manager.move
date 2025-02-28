@@ -65,9 +65,22 @@ module marketplace::campaign_manager {
     const ERR_INVALID_REWARD_POOL: u64 = 8;
     const ERR_INVALID_PUBLIC_KEY_FOR_ENCRYPTION: u64 = 9;
     const ERR_EXCEED_MAX_SCORE: u64 = 10;
-
-    const MAX_SCORE: u64 = 100;
+    const ERR_TITLE_TOO_SHORT: u64 = 11;
+    const ERR_TITLE_TOO_LONG: u64 = 12;
+    const ERR_DESCRIPTION_TOO_SHORT: u64 = 13;
+    const ERR_DESCRIPTION_TOO_LONG: u64 = 14;
+    const ERR_PROMPT_TOO_SHORT: u64 = 15;
+    const ERR_PROMPT_TOO_LONG: u64 = 16;
     
+    const MAX_SCORE: u64 = 100;
+
+    const MAX_TITLE_LENGTH: u64 = 100;
+    const MIN_TITLE_LENGTH: u64 = 15;
+    const MAX_DESCRIPTION_LENGTH: u64 = 1000;
+    const MIN_DESCRIPTION_LENGTH: u64 = 50;
+    const MAX_PROMPT_LENGTH: u64 = 2000;
+    const MIN_PROMPT_LENGTH: u64 = 50;
+
     const ERR_CAMPAIGN_NOT_ACTIVE: u64 = 3001;
     const ERR_NOT_CAMPAIGN_CREATOR: u64 = 3002;
 
@@ -92,8 +105,20 @@ module marketplace::campaign_manager {
         public_key_for_encryption: vector<u8>
     ) {
         assert!(length(&title) > 0, ERR_INVALID_TITLE);
+        assert!(length(&title) >= MIN_TITLE_LENGTH, ERR_TITLE_TOO_SHORT);
+        assert!(length(&title) <= MAX_TITLE_LENGTH, ERR_TITLE_TOO_LONG);
+
+        // description
         assert!(length(&description) > 0, ERR_INVALID_DESCRIPTION);
+        assert!(length(&description) >= MIN_DESCRIPTION_LENGTH, ERR_DESCRIPTION_TOO_SHORT);
+        assert!(length(&description) <= MAX_DESCRIPTION_LENGTH, ERR_DESCRIPTION_TOO_LONG);
+
+        // prompt
         assert!(length(&prompt) > 0, ERR_INVALID_PROMPT);
+        assert!(length(&prompt) >= MIN_PROMPT_LENGTH, ERR_PROMPT_TOO_SHORT);
+        assert!(length(&prompt) <= MAX_PROMPT_LENGTH, ERR_PROMPT_TOO_LONG);
+
+        // unit_price
         assert!(unit_price > 0, ERR_INVALID_UNIT_PRICE);
         assert!(minimum_contribution >= 0, ERR_INVALID_MINIMUM_CONTRIBUTION);
         assert!(minimum_score >= 0, ERR_INVALID_MINIMUM_SCORE);
